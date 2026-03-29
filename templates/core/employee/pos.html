@@ -1,0 +1,764 @@
+{% extends 'base.html' %}
+
+{% block title %}Point of Sale - WASHNET POS{% endblock %}
+
+{% block extra_css %}
+<!-- Restoring isolated Tailwind just for POS complex layouts since base.html dropped it globally -->
+<script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block is_dashboard %}
+<div class="dashboard-wrap h-screen overflow-hidden">
+    
+    <!-- MINIMAL POS SIDEBAR (Collapsed style focus) -->
+    <aside class="sidebar hidden lg:flex flex-col border-r border-border bg-surface" style="width: 80px; min-width: 80px;">
+        <div class="sidebar-header flex justify-center !p-4 border-b border-border">
+            <a href="{% url 'home' %}" class="text-primary hover:text-primary-hover flex justify-center" title="Go Home">
+                <i data-feather="droplet" style="width: 28px; height: 28px;"></i>
+            </a>
+        </div>
+        
+        <nav class="flex flex-col gap-4 mt-6 items-center flex-1">
+            <a href="{% url 'employee_dashboard' %}" class="p-3 rounded-xl text-muted hover:bg-background hover:text-main transition-colors" title="Workspace">
+                <i data-feather="grid"></i>
+            </a>
+            <a href="{% url 'employee_pos' %}" class="p-3 rounded-xl clay-inset text-primary font-bold" title="Point of Sale">
+                <i data-feather="monitor"></i>
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t border-border flex justify-center">
+            <a href="{% url 'logout' %}" class="p-3 rounded-lg text-error hover:bg-red-50 transition-colors" title="Sign Out">
+                <i data-feather="log-out"></i>
+            </a>
+        </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="dashboard-content h-screen flex flex-col bg-background">
+        
+        <header class="bg-surface border-b border-border flex items-center justify-between px-6 py-4 shadow-sm z-10 shrink-0">
+            <div class="flex items-center gap-4">
+                <a href="{% url 'employee_dashboard' %}" class="clay-btn clay-btn-secondary px-3 py-2 text-muted hover:text-main" style="border-radius: 12px;">
+                    <i data-feather="arrow-left" style="width: 18px; height: 18px;"></i>
+                </a>
+                <h1 class="text-xl font-black text-main m-0 tracking-tight flex items-center gap-2">
+                    <i data-feather="shopping-cart" class="text-primary"></i> 
+                    Terminal #1
+                </h1>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <span class="clay-badge clay-badge-green">System Online</span>
+                <div class="h-6 w-px bg-border"></div>
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold text-main m-0">{{ user.username }}</p>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-background flex items-center justify-center border border-border text-xs font-bold text-primary">
+                    {{ user.username|make_list|first|upper }}
+                </div>
+            </div>
+        </header>
+
+        <!-- SPLIT PANE POS LAYOUT -->
+        <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+            
+            <!-- LEFT: CATALOG -->
+            <div class="flex-[3] overflow-y-auto p-6 flex flex-col gap-8 custom-scrollbar">
+                
+                <!-- Services Box -->
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-main m-0 flex items-center gap-2">
+                            <i data-feather="layers" class="text-muted"></i> Core Services
+                        </h2>
+                        <span class="clay-badge clay-badge-gray">Billed per kg</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {% for service in services %}
+                        <div class="clay-card p-4 cursor-pointer hover:border-primary transition-all group flex flex-col justify-between"
+                            onclick="openServiceModal('{{ service.id }}', '{{ service.name|escapejs }}', parseFloat('{{ service.price }}'))"
+                            style="min-height: 120px; padding: 16px;">
+                            <div>
+                                <h3 class="font-bold text-main text-sm md:text-base leading-snug group-hover:text-primary transition-colors">{{ service.name }}</h3>
+                            </div>
+                            <div class="mt-4 flex justify-between items-end">
+                                <p class="text-secondary font-black text-lg" style="letter-spacing: -0.02em;">₱{{ service.price }}<span class="text-xs text-muted font-medium block">/kg base</span></p>
+                                <div class="w-8 h-8 rounded-full bg-background flex items-center justify-center text-muted group-hover:bg-primary group-hover:text-white transition-colors">
+                                    <i data-feather="plus" style="width: 16px; height: 16px;"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-span-full p-8 text-center bg-surface rounded-lg border border-dashed border-border text-muted">
+                            <i data-feather="alert-circle" class="mx-auto mb-2 opacity-50"></i>
+                            <p class="font-medium">No services configured.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Products Box -->
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-main m-0 flex items-center gap-2">
+                            <i data-feather="package" class="text-muted"></i> Retail & Add-ons
+                        </h2>
+                        <span class="clay-badge clay-badge-gray">Billed per unit</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {% for product in products %}
+                        <div class="clay-card p-4 cursor-pointer hover:border-primary transition-all group flex flex-col justify-between"
+                            onclick="openProductModal('{{ product.id }}', '{{ product.name|escapejs }}', parseFloat('{{ product.price }}'))"
+                            style="min-height: 120px; padding: 16px;">
+                            <div>
+                                <h3 class="font-bold text-main text-sm md:text-base leading-snug">{{ product.name }}</h3>
+                            </div>
+                            <div class="mt-4 flex justify-between items-end">
+                                <p class="text-primary font-black text-lg" style="letter-spacing: -0.02em;">₱{{ product.price }}<span class="text-xs text-muted font-medium block">/pc</span></p>
+                                <div class="w-8 h-8 rounded-full bg-background flex items-center justify-center text-muted group-hover:bg-primary group-hover:text-white transition-colors">
+                                    <i data-feather="plus" style="width: 16px; height: 16px;"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-span-full p-8 text-center bg-surface rounded-lg border border-dashed border-border text-muted">
+                            <i data-feather="alert-circle" class="mx-auto mb-2 opacity-50"></i>
+                            <p class="font-medium">No products configured.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT: ACTIVE CART / REGISTER -->
+            <div class="flex-[2] md:flex-none md:w-[400px] xl:w-[450px] bg-surface border-l border-border flex flex-col shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.02)] z-10">
+                
+                <!-- Client Assignment -->
+                <div class="p-5 border-b border-border shrink-0 bg-background">
+                    <h2 class="text-sm font-bold text-main uppercase tracking-wider mb-3">Order Ticket</h2>
+                    
+                    <form id="posForm" method="POST" action="{% url 'employee_pos' %}" class="flex flex-col h-full m-0">
+                        {% csrf_token %}
+                        
+                        <!-- Customer / Walk-in Toggle -->
+                        <div class="flex clay-inset rounded-lg p-1 mb-3 gap-1">
+                            <button type="button" id="btnExisting" class="flex-1 text-xs font-bold py-2 rounded-md bg-surface shadow-sm text-main transition-all" onclick="toggleCustomerMode('existing')">Existing Account</button>
+                            <button type="button" id="btnWalkin" class="flex-1 text-xs font-bold py-2 rounded-md text-muted hover:text-main transition-all" onclick="toggleCustomerMode('walkin')">Walk-in Nickname</button>
+                        </div>
+
+                        <!-- Existing Customer Input -->
+                        <div id="existingCustomerGroup" class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted transition-colors z-10">
+                                <i data-feather="search" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <input type="text" id="customer_search" class="clay-input pl-10 font-bold" placeholder="Find Customer username or name..." autocomplete="off">
+                            <input type="hidden" id="customer_id" name="customer_id" value="{{ initial_customer_id }}">
+                            <p class="text-[10px] text-muted mt-1 font-semibold px-1">Or leave entirely blank if unknown.</p>
+                            
+                            <!-- Autocomplete Dropdown Panel -->
+                            <div id="customerSuggestions" class="absolute z-50 w-full mt-1 border border-border rounded-xl shadow-clayCard hidden max-h-[220px] overflow-y-auto custom-scrollbar" style="background: #ffffff; backdrop-filter: none;">
+                                <!-- JS inserts list options here -->
+                            </div>
+                        </div>
+
+                        <!-- Walk-in Name Input -->
+                        <div id="walkinNameGroup" class="relative group hidden">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted transition-colors z-10">
+                                <i data-feather="user" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <input type="text" id="walkin_name" name="walkin_name" class="clay-input pl-10 font-bold" placeholder="Enter nickname... e.g. 'Ate May'">
+                            <p class="text-[10px] text-muted mt-1 font-semibold px-1">Does not create a registered account.</p>
+                        </div>
+
+                        <script>
+                            function toggleCustomerMode(mode) {
+                                const btnExisting = document.getElementById('btnExisting');
+                                const btnWalkin = document.getElementById('btnWalkin');
+                                const groupExisting = document.getElementById('existingCustomerGroup');
+                                const groupWalkin = document.getElementById('walkinNameGroup');
+                                const inputCustomer = document.getElementById('customer_id');
+                                const inputWalkin = document.getElementById('walkin_name');
+                                
+                                if (mode === 'existing') {
+                                    btnExisting.className = 'flex-1 text-xs font-bold py-2 rounded-md bg-surface shadow-sm text-main transition-all';
+                                    btnWalkin.className = 'flex-1 text-xs font-bold py-2 rounded-md text-muted hover:text-main transition-all';
+                                    groupExisting.classList.remove('hidden');
+                                    groupWalkin.classList.add('hidden');
+                                    inputWalkin.value = '';
+                                } else {
+                                    btnWalkin.className = 'flex-1 text-xs font-bold py-2 rounded-md bg-surface shadow-sm text-main transition-all';
+                                    btnExisting.className = 'flex-1 text-xs font-bold py-2 rounded-md text-muted hover:text-main transition-all';
+                                    groupWalkin.classList.remove('hidden');
+                                    groupExisting.classList.add('hidden');
+                                    inputCustomer.value = '';
+                                }
+                            }
+                            
+                            // Initialize toggle based on pre-filled data
+                            document.addEventListener("DOMContentLoaded", () => {
+                                if ("{{ initial_customer_id }}") {
+                                    toggleCustomerMode('existing');
+                                }
+                            });
+                        </script>
+
+                        {% if appointment_id %}
+                        <input type="hidden" name="appointment_id" value="{{ appointment_id }}">
+                        <div class="mt-3 bg-secondary-light border border-secondary/30 rounded-lg p-3 flex items-start gap-2">
+                            <i data-feather="clock" class="text-secondary shrink-0 mt-0.5" style="width: 14px; height: 14px;"></i>
+                            <div>
+                                <p class="text-xs font-bold text-secondary tracking-wide uppercase">Linked System Appointment</p>
+                                <p class="text-xs text-secondary-hover font-medium mt-0.5">Fulfilling task #{{ appointment_id }} automatically</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                </div>
+
+                <!-- Line Items (Scrollable) -->
+                <div id="orderItems" class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-surface text-sm">
+                    <!-- JS Injects cart items here -->
+                    <div class="flex flex-col items-center justify-center h-full text-slate-400 opacity-60">
+                        <i data-feather="shopping-bag" style="width: 48px; height: 48px; margin-bottom: 1rem; stroke-width: 1px;"></i>
+                        <p class="font-bold">Ticket is empty</p>
+                        <p class="text-xs mt-1 font-medium">Select services from catalog</p>
+                    </div>
+                </div>
+
+                <!-- Checkout Footer -->
+                <div class="p-6 bg-surface border-t border-border shrink-0 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.02)]">
+                    
+                    <div class="flex justify-between items-end mb-4 text-muted">
+                        <span class="text-sm font-bold uppercase tracking-wider">Subtotal</span>
+                        <span id="subtotalAmount" class="font-bold text-main text-lg tabular-nums">₱0.00</span>
+                    </div>
+
+                    <div class="flex justify-between items-end mb-6 pb-4 border-b border-border">
+                        <span class="text-2xl font-black text-main leading-none">Total</span>
+                        <span id="totalAmount" class="text-4xl font-black text-secondary leading-none tracking-tight tabular-nums">₱0.00</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <label class="cursor-pointer relative">
+                            <input type="radio" name="payment_method" value="CASH" class="peer sr-only" checked onchange="togglePaymentRef()">
+                            <div class="clay-inset rounded-lg p-3 text-center transition-all font-bold text-sm bg-surface border border-transparent peer-checked:bg-primary-light peer-checked:border-primary">
+                                <i data-feather="dollar-sign" class="mx-auto mb-1 text-slate-500 peer-checked:text-primary transition-colors"></i>
+                                Cash
+                            </div>
+                        </label>
+                        <label class="cursor-pointer relative">
+                            <input type="radio" name="payment_method" value="GCASH" class="peer sr-only" onchange="togglePaymentRef()">
+                            <div class="clay-inset rounded-lg p-3 text-center transition-all font-bold text-sm bg-surface border border-transparent peer-checked:bg-blue-50 peer-checked:border-blue-500 text-main">
+                                <i data-feather="smartphone" class="mx-auto mb-1 text-slate-500 peer-checked:text-blue-500 transition-colors"></i>
+                                GCash
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Dynamic Payment Reference (GCash) -->
+                    <div id="paymentRefGroup" class="mb-6 hidden">
+                        <label class="form-label font-bold text-sm text-main">GCash Reference Number</label>
+                        <input type="text" id="payment_reference" name="payment_reference" class="clay-input font-bold" placeholder="e.g. 1002345689">
+                        <p class="text-[10px] text-error mt-1 font-semibold px-1 hidden" id="paymentRefError">Reference code is strictly required for GCash.</p>
+                    </div>
+
+                    <script>
+                        function togglePaymentRef() {
+                            const method = document.querySelector('input[name="payment_method"]:checked').value;
+                            const refGroup = document.getElementById('paymentRefGroup');
+                            if (method === 'GCASH') {
+                                refGroup.classList.remove('hidden');
+                            } else {
+                                refGroup.classList.add('hidden');
+                                document.getElementById('payment_reference').value = '';
+                                document.getElementById('paymentRefError').classList.add('hidden');
+                            }
+                        }
+                    </script>
+
+                    <input type="hidden" name="order_data" id="orderDataPayload">
+                    
+                    <button type="button" onclick="submitOrder()" id="chargeBtn" class="clay-btn clay-btn-primary w-full py-4 text-base rounded-xl font-black uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed justify-center gap-2">
+                        <i data-feather="credit-card"></i> Pay & Print Ticket
+                    </button>
+                    
+                    </form>
+                </div>
+
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock is_dashboard %}
+
+{% block extra_js %}
+
+<!-- CSS for custom thin scrollbars on POS -->
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+    /* Fix weird artifacts on sticky headers if any */
+    body { overflow: hidden; } /* Prevents double scrolling since dashboard is absolute */
+</style>
+
+<!-- MODALS -->
+<!-- Service Modal -->
+<div id="serviceModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center px-4 opacity-0 transition-opacity">
+    <div class="clay-card w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] scale-95 transition-transform duration-200 p-0" id="serviceModalCard" style="background: #ffffff; backdrop-filter: none;">
+        
+        <div class="px-8 py-5 border-b border-border flex justify-between items-center bg-background shrink-0">
+            <div>
+                <h2 id="modalTitle" class="text-xl font-bold text-main m-0">Add Service</h2>
+                <p id="modalSubtitle" class="text-xs font-bold text-primary uppercase tracking-wider mt-1">Setup Load</p>
+            </div>
+            <button type="button" onclick="closeServiceModal()" class="w-10 h-10 rounded-full bg-border text-slate-600 flex items-center justify-center hover:bg-slate-300 transition-colors">
+                <i data-feather="x" style="width: 20px; height: 20px;"></i>
+            </button>
+        </div>
+        
+        <div class="p-8 overflow-y-auto custom-scrollbar flex-1">
+            <div class="form-group mb-6">
+                <label class="form-label font-bold text-sm">Scale Weight (kg)</label>
+                <div class="relative">
+                    <input type="number" id="modalWeight" class="clay-input text-lg py-3 font-black pr-12" placeholder="0.0" min="0.1" step="0.1" oninput="calculateLoads()">
+                    <div class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-muted z-10">kg</div>
+                </div>
+            </div>
+
+            <div id="loadsContainer" class="flex flex-col gap-4 mt-6">
+                <div class="text-center p-8 bg-background rounded-lg border border-dashed border-border text-muted">
+                    <i data-feather="target" class="mx-auto mb-2"></i>
+                    <p class="text-sm font-semibold">Enter weight to construct loads automatically.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 border-t border-border bg-surface flex justify-end gap-4 shrink-0">
+            <button type="button" class="clay-btn clay-btn-secondary px-8 py-3 text-base" onclick="closeServiceModal()">Cancel</button>
+            <button type="button" class="clay-btn clay-btn-primary px-10 py-3 text-base font-bold" onclick="confirmServiceAddition()">Save to Ticket</button>
+        </div>
+    </div>
+</div>
+
+<!-- Product Modal -->
+<div id="productModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center px-4 opacity-0 transition-opacity">
+    <div class="clay-card w-full max-w-lg overflow-hidden flex flex-col scale-95 transition-transform duration-200 p-0" id="productModalCard" style="background: #ffffff; backdrop-filter: none;">
+        
+        <div class="px-8 py-5 border-b border-border flex justify-between items-center bg-background">
+            <div>
+                <h2 id="productModalTitle" class="text-xl font-bold text-main m-0">Add Item</h2>
+                <p id="productModalSubtitle" class="text-xs font-bold text-primary uppercase tracking-wider mt-1">Retail</p>
+            </div>
+            <button type="button" onclick="closeProductModal()" class="w-10 h-10 rounded-full bg-border text-slate-600 flex items-center justify-center hover:bg-slate-300 transition-colors">
+                <i data-feather="x" style="width: 20px; height: 20px;"></i>
+            </button>
+        </div>
+        
+        <div class="p-8">
+            <div class="form-group m-0">
+                <label class="form-label font-bold text-sm">Quantity</label>
+                <div class="flex items-center gap-4">
+                    <button type="button" onclick="document.getElementById('productModalQty').stepDown()" class="w-12 h-12 rounded-lg bg-background flex items-center justify-center font-bold text-xl hover:bg-border transition-colors border border-border">-</button>
+                    <input type="number" id="productModalQty" class="clay-input text-center text-xl py-2 font-black flex-1" value="1" min="1" step="1">
+                    <button type="button" onclick="document.getElementById('productModalQty').stepUp()" class="w-12 h-12 rounded-lg bg-background flex items-center justify-center font-bold text-xl hover:bg-border transition-colors border border-border">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 border-t border-border bg-surface flex justify-end gap-3">
+            <button type="button" class="clay-btn clay-btn-primary w-full shadow-sm font-bold py-3 text-base" onclick="confirmProductAddition()">Add Extras</button>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Toast -->
+<div id="toastNotification" class="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full font-bold shadow-xl z-[100] flex items-center gap-2 transform -translate-y-20 opacity-0 transition-all duration-300">
+    <i data-feather="alert-triangle" class="text-warning" style="width: 18px; height: 18px;"></i>
+    <span id="toastMessage">Error</span>
+</div>
+
+<script>
+    // Injected Data Models
+    const availableProducts = [
+        // {% for product in products %}
+        { id: '{{ product.id }}', name: '{{ product.name|escapejs }}', price: parseFloat('{{ product.price }}') },
+        // {% endfor %}
+    ];
+
+    // State
+    let cart = [];
+    let currentService = null;
+    let currentProduct = null;
+    let globalLoadGroupCounter = 0;
+    
+    // UI Tools
+    function showError(msg) {
+        const toast = document.getElementById('toastNotification');
+        document.getElementById('toastMessage').innerText = msg;
+        toast.classList.remove('-translate-y-20', 'opacity-0');
+        setTimeout(() => toast.classList.add('-translate-y-20', 'opacity-0'), 3000);
+    }
+
+    function animateModalOpen(wrapperId, cardId) {
+        const wrap = document.getElementById(wrapperId);
+        const card = document.getElementById(cardId);
+        wrap.classList.remove('hidden');
+        // prompt reflow
+        void wrap.offsetWidth;
+        wrap.classList.remove('opacity-0');
+        card.classList.remove('scale-95');
+    }
+
+    function animateModalClose(wrapperId, cardId) {
+        const wrap = document.getElementById(wrapperId);
+        const card = document.getElementById(cardId);
+        wrap.classList.add('opacity-0');
+        card.classList.add('scale-95');
+        setTimeout(() => wrap.classList.add('hidden'), 200); // match duration-200
+    }
+
+    // Modal Lifecycle: Services
+    function openServiceModal(id, name, price) {
+        currentService = { id, name, price };
+        document.getElementById('modalTitle').innerText = name;
+        document.getElementById('modalSubtitle').innerText = 'Base: ₱' + price + ' / kg';
+        document.getElementById('modalWeight').value = '';
+        
+        document.getElementById('loadsContainer').innerHTML = `
+            <div class="text-center p-8 bg-background rounded-lg border border-dashed border-border text-muted">
+                <i data-feather="target" class="mx-auto mb-2"></i>
+                <p class="text-sm font-semibold">Enter weight to construct loads automatically.</p>
+            </div>
+        `;
+        feather.replace();
+        
+        animateModalOpen('serviceModal', 'serviceModalCard');
+        setTimeout(() => document.getElementById('modalWeight').focus(), 100);
+    }
+
+    function closeServiceModal() {
+        animateModalClose('serviceModal', 'serviceModalCard');
+        currentService = null;
+    }
+
+    function calculateLoads() {
+        const weight = parseFloat(document.getElementById('modalWeight').value);
+        const loadsContainer = document.getElementById('loadsContainer');
+        
+        if (isNaN(weight) || weight <= 0) {
+            loadsContainer.innerHTML = '';
+            return;
+        }
+
+        const numLoads = Math.ceil(weight / 7);
+        let html = `
+            <div class="flex items-center gap-2 mb-2">
+                <span class="clay-badge clay-badge-indigo font-bold">${numLoads} Hardware Loads Required</span>
+                <span class="text-xs text-muted font-bold ml-auto">Max 7kg/load</span>
+            </div>
+        `;
+        
+        for (let i = 1; i <= numLoads; i++) {
+            html += `
+                <div class="bg-surface border border-border rounded-lg overflow-hidden shadow-sm">
+                    <div class="bg-background px-4 py-2 border-b border-border font-bold text-sm text-main flex items-center gap-2">
+                        <div class="w-5 h-5 rounded-full bg-border text-muted flex items-center justify-center text-[10px]">${i}</div>
+                        Load Setup
+                    </div>
+                    <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            `;
+            
+            availableProducts.forEach(prod => {
+                html += `
+                    <label class="flex items-center justify-between p-2.5 rounded-lg border border-border cursor-pointer hover:border-primary peer-checked:border-primary transition-colors hover:bg-background select-none group">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="load_${i}_prod_${prod.id}" value="${prod.id}" class="w-4 h-4 accent-primary cursor-pointer">
+                            <span class="font-bold text-sm text-main group-hover:text-primary transition-colors leading-none">${prod.name}</span>
+                        </div>
+                        <span class="text-xs font-black text-muted bg-background px-1.5 py-0.5 rounded leading-none">+₱${prod.price}</span>
+                    </label>
+                `;
+            });
+            
+            html += `</div></div>`;
+        }
+        
+        loadsContainer.innerHTML = html;
+        feather.replace();
+    }
+
+    function confirmServiceAddition() {
+        if (!currentService) return;
+        
+        const weight = parseFloat(document.getElementById('modalWeight').value);
+        if (isNaN(weight) || weight <= 0) {
+            showError('Invalid scale weight read.');
+            return;
+        }
+
+        const numLoads = Math.ceil(weight / 7);
+
+        // Additions per distinct load segment
+        for (let i = 1; i <= numLoads; i++) {
+            globalLoadGroupCounter++;
+            const currentLoadId = globalLoadGroupCounter;
+            
+            // Push base service explicitly bound to this load index
+            cart.push({
+                type: 'Service',
+                item_type: 'SERVICE',
+                load_index: currentLoadId,
+                id: currentService.id,
+                name: currentService.name,
+                desc: `Load ${i}/${numLoads} · Max 7kg block`,
+                price: currentService.price,
+                qty: 1, 
+                total: currentService.price * 1
+            });
+            
+            // Push addons explicitly bound to this load index
+            availableProducts.forEach(prod => {
+                const checkbox = document.getElementById(`load_${i}_prod_${prod.id}`);
+                if (checkbox && checkbox.checked) {
+                    cart.push({
+                        type: 'Product',
+                        item_type: 'ADDON',
+                        load_index: currentLoadId,
+                        id: prod.id,
+                        name: prod.name,
+                        desc: `Add-on bound to Load ${currentLoadId}`,
+                        price: prod.price,
+                        qty: 1,
+                        total: prod.price
+                    });
+                }
+            });
+        }
+
+        closeServiceModal();
+        renderCart();
+    }
+
+    // Modal Lifecycle: Products
+    function openProductModal(id, name, price) {
+        currentProduct = { id, name, price };
+        document.getElementById('productModalTitle').innerText = name;
+        document.getElementById('productModalSubtitle').innerText = 'Retail: ₱' + price;
+        document.getElementById('productModalQty').value = '1';
+        
+        animateModalOpen('productModal', 'productModalCard');
+    }
+
+    function closeProductModal() {
+        animateModalClose('productModal', 'productModalCard');
+        currentProduct = null;
+    }
+
+    function confirmProductAddition() {
+        if (!currentProduct) return;
+        
+        const qty = parseFloat(document.getElementById('productModalQty').value);
+        if (isNaN(qty) || qty <= 0) {
+            showError('Invalid quantity integer.');
+            return;
+        }
+
+        cart.push({
+            type: 'Product',
+            item_type: 'PRODUCT',
+            load_index: null,
+            id: currentProduct.id,
+            name: currentProduct.name,
+            desc: 'Direct retail purchase',
+            price: currentProduct.price,
+            qty: qty,
+            total: currentProduct.price * qty
+        });
+
+        closeProductModal();
+        renderCart();
+    }
+
+    // Cart Management Core
+    function removeItem(index) {
+        // If the item requested for removal is a base Service, we should ideally remove its attached addons. 
+        // For simplicity, removing anything natively drops it from array.
+        cart.splice(index, 1);
+        renderCart();
+    }
+
+    function renderCart() {
+        const orderItemsDiv = document.getElementById('orderItems');
+        let listHTML = [];
+        let grandTotal = 0;
+
+        if (cart.length === 0) {
+            orderItemsDiv.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full text-muted opacity-60">
+                    <i data-feather="shopping-bag" style="width: 48px; height: 48px; margin-bottom: 1rem; stroke-width: 1.5px;"></i>
+                    <p class="font-bold text-base">Ticket is empty</p>
+                    <p class="text-xs mt-1 font-semibold">Select services from catalog</p>
+                </div>
+            `;
+            updateTotals(0);
+            feather.replace();
+            return;
+        }
+
+        cart.forEach((item, index) => {
+            grandTotal += item.total;
+            
+            const isService = item.item_type === 'SERVICE';
+            const isAddon = item.item_type === 'ADDON';
+            
+            const icon = isService ? 'layers' : (isAddon ? 'plus-circle' : 'package');
+            const accent = isService ? 'text-primary bg-primary-light' : 'text-primary bg-background border border-border';
+            const hoverAccent = 'hover:border-primary transition-colors';
+            
+            let indentation = isAddon ? 'ml-8 mb-2 mt-[-8px]' : 'mb-3';
+            let visualBox = isAddon ? '' : 'clay-card';
+            let inlinePadding = isAddon ? 'px-3 py-2 bg-surface/50 border border-slate-200' : 'p-3';
+
+            listHTML.push(`
+                <div class="${visualBox} flex gap-3 relative overflow-hidden group ${hoverAccent} ${indentation}" style="border-radius: 12px; ${inlinePadding}">
+                    ${isAddon ? '' : `<div class="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${accent}">
+                        <i data-feather="${icon}" style="width: 18px; height: 18px;"></i>
+                    </div>`}
+                    <div class="flex-1 min-w-0 pr-8">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold cursor-default ${isAddon ? 'text-xs text-slate-700' : 'text-sm text-main'} truncate pr-2 pt-0.5" title="${item.name}">${isAddon ? '<i data-feather="corner-down-right" style="width:12px;height:12px;display:inline-block;margin-right:2px;color:#94a3b8;"></i>' : ''}${item.name}</h4>
+                            <span class="font-black ${isAddon ? 'text-slate-500 text-xs' : 'text-main text-sm'} tabular-nums">₱${item.total.toFixed(2)}</span>
+                        </div>
+                        <p class="text-[10px] font-bold text-muted mt-1 flex justify-between">
+                            <span class="truncate uppercase tracking-wider">${item.item_type === 'PRODUCT' ? 'RETAIL ITEM' : (item.item_type==='SERVICE' ? 'MACHINE LOAD ' + item.load_index : '')}</span>
+                            <span class="shrink-0 ml-2">(${item.qty} ${isService ? 'x base' : 'x'} ₱${item.price.toFixed(2)})</span>
+                        </p>
+                    </div>
+                    
+                    <button type="button" onclick="removeItem(${index})" class="absolute right-0 top-0 bottom-0 w-8 bg-error/10 text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border-l border-error/5" title="Remove">
+                        <i data-feather="x" style="width: 14px; height: 14px; stroke-width: 3px;"></i>
+                    </button>
+                </div>
+            `);
+        });
+
+        orderItemsDiv.innerHTML = listHTML.join('');
+        updateTotals(grandTotal);
+        feather.replace();
+        
+        // Auto scroll cart to bottom so newest items are seen
+        orderItemsDiv.scrollTop = orderItemsDiv.scrollHeight;
+    }
+
+    function updateTotals(total) {
+        document.getElementById('subtotalAmount').innerText = '₱' + total.toFixed(2);
+        document.getElementById('totalAmount').innerText = '₱' + total.toFixed(2);
+        document.getElementById('orderDataPayload').value = JSON.stringify(cart);
+        
+        const btn = document.getElementById('chargeBtn');
+        if(total <= 0) {
+            btn.disabled = true;
+        } else {
+            btn.disabled = false;
+        }
+    }
+
+    function submitOrder() {
+        if (cart.length === 0) {
+            showError('Refused. Ticket is empty.');
+            return;
+        }
+        
+        // Prevent submission if GCash is missing reference
+        const method = document.querySelector('input[name="payment_method"]:checked').value;
+        const refInput = document.getElementById('payment_reference');
+        const refError = document.getElementById('paymentRefError');
+        
+        if (method === 'GCASH' && !refInput.value.trim()) {
+            refError.classList.remove('hidden');
+            refInput.focus();
+            return;
+        }
+        
+        const btn = document.getElementById('chargeBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i data-feather="loader" class="animate-spin mr-2"></i> Processing Bank Auth...';
+        feather.replace();
+        
+        // Wait extremely briefly for UI to catch up then submit
+        setTimeout(() => {
+            document.getElementById('posForm').submit();
+        }, 300);
+    }
+    
+    // Autocomplete Logic
+    const searchInput = document.getElementById('customer_search');
+    const idInput = document.getElementById('customer_id');
+    const suggestionsPanel = document.getElementById('customerSuggestions');
+    let searchTimeout = null;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        // Clear underlying ID if user modifies the sealed string
+        idInput.value = '';
+        
+        if (query.length === 0) {
+            suggestionsPanel.classList.add('hidden');
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            fetch(`/pos/api/customers/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    suggestionsPanel.innerHTML = '';
+                    if (data.results && data.results.length > 0) {
+                        data.results.forEach(user => {
+                            const div = document.createElement('div');
+                            div.className = 'p-3 hover:bg-primary-light cursor-pointer border-b border-border last:border-0 transition-colors group';
+                            div.onclick = () => selectCustomer(user.id, user.full_name);
+                            div.innerHTML = `
+                                <p class="font-bold text-main group-hover:text-primary transition-colors">${user.full_name}</p>
+                                <p class="text-xs font-semibold text-muted">@${user.username}</p>
+                            `;
+                            suggestionsPanel.appendChild(div);
+                        });
+                    } else {
+                        suggestionsPanel.innerHTML = `
+                            <div class="p-4 text-center text-muted font-bold text-sm">
+                                No matching customers found
+                            </div>
+                        `;
+                    }
+                    suggestionsPanel.classList.remove('hidden');
+                })
+                .catch(err => console.error('Error fetching customers:', err));
+        }, 250);
+    });
+
+    function selectCustomer(id, fullName) {
+        searchInput.value = fullName;
+        idInput.value = id;
+        suggestionsPanel.classList.add('hidden');
+    }
+
+    // Close autocomplete when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !suggestionsPanel.contains(e.target)) {
+            suggestionsPanel.classList.add('hidden');
+        }
+    });
+    
+    // Init state check on load to disable btn if returning back
+    document.addEventListener("DOMContentLoaded", () => {
+        updateTotals(0);
+        togglePaymentRef();
+    });
+</script>
+{% endblock %}

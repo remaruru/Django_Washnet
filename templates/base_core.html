@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}WASHNET{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <script src="https://unpkg.com/feather-icons"></script>
+    {% block extra_head %}{% endblock %}
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    
+    <!-- Global Toast Messages -->
+    {% if messages %}
+    <div class="messages-container" id="toast-container">
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Layout Wrapper -->
+    {% block layout %}{% endblock %}
+
+    <!-- AI Assistant Floating Action Button -->
+    <div class="ai-fab" onclick="alert('WASHNET AI Assistant initialization pending...')">
+        <i data-feather="message-circle"></i>
+    </div>
+    
+    <!-- Scripts -->
+    <script>
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const toasts = document.querySelectorAll('.alert');
+            toasts.forEach(toast => {
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    toast.style.transition = 'all 0.4s ease';
+                    setTimeout(() => toast.remove(), 400);
+                }, 5000);
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

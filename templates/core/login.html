@@ -1,0 +1,47 @@
+{% extends 'base_auth.html' %}
+
+{% block title %}Log in - WASHNET{% endblock %}
+
+{% block content %}
+<div style="width: 100%; max-width: 440px; text-align: center;">
+    
+    <!-- Header Logo -->
+    <a href="{% url 'home' %}" style="display: inline-flex; align-items: center; gap: var(--space-2); text-decoration: none; margin-bottom: var(--space-8); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #A78BFA, #7C3AED); display: flex; align-items: center; justify-content: center; box-shadow: 12px 12px 24px #d1cddb, -12px -12px 24px #ffffff; color: white;">
+            <i data-feather="droplet" style="width: 28px; height: 28px;"></i>
+        </div>
+    </a>
+
+    <div style="margin-bottom: var(--space-8);">
+        <p style="text-transform: uppercase; letter-spacing: 0.1em; font-size: var(--text-xs); font-weight: 800; color: var(--primary); margin-bottom: var(--space-2);">Welcome Back</p>
+        <h1 style="font-size: var(--text-4xl); font-weight: 900; color: var(--text-main); margin-bottom: var(--space-2); letter-spacing: -0.03em; font-family: 'Nunito', sans-serif;">Log in to Washnet</h1>
+        <p style="color: var(--text-muted); font-weight: 600; font-size: var(--text-base);">Enter your credentials to access your workspace.</p>
+    </div>
+
+    <div class="clay-auth-card" style="text-align: left; padding: var(--space-12) var(--space-8);">
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="form-group" style="margin-bottom: var(--space-6);">
+                <label for="username" class="form-label" style="font-weight: 800; color: var(--text-main); margin-bottom: var(--space-3);">Username</label>
+                <input type="text" id="username" name="username" class="clay-auth-input" style="font-weight: 600;" placeholder="your_username" required autocomplete="username" autofocus>
+            </div>
+
+            <div class="form-group" style="margin-bottom: var(--space-8);">
+                <div style="margin-bottom: var(--space-3);">
+                    <label for="password" class="form-label" style="margin: 0; font-weight: 800; color: var(--text-main);">Password</label>
+                </div>
+                <input type="password" id="password" name="password" class="clay-auth-input" style="font-weight: 600;" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="clay-auth-btn" style="width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 900; letter-spacing: 0.02em;">
+                Log In <i data-feather="arrow-right" style="width: 18px; height: 18px;"></i>
+            </button>
+        </form>
+    </div>
+
+    <p style="font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); margin-top: var(--space-12);">
+        New to the platform? 
+        <a href="{% url 'register' %}" style="font-weight: 900; color: var(--primary); text-decoration: none; margin-left: 4px; border-bottom: 2px solid transparent; transition: border-color 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='transparent'">Create an account</a>
+    </p>
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}WASHNET{% endblock %}</title>
+    <!-- Modern typeface (Nunito/DM Sans loaded via styles.css) -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+    <!-- Feather Icons for lightweight modern icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    
+    <!-- Global Toast Messages -->
+    {% if messages %}
+    <div class="messages-container" id="toast-container">
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- CONDITIONAL LAYOUT LOGIC -->
+    {% block is_dashboard %}
+    <!-- ================= PUBLIC/MARKETING LAYOUT ================= -->
+    <div class="public-layout">
+        {% if not hide_navbar %}
+        <header class="top-navbar">
+            <div class="top-navbar-inner">
+                <a href="{% url 'home' %}" class="flex items-center gap-2 font-nunito font-black text-2xl text-gray-800">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md text-white">
+                        <i data-feather="droplet" style="width: 20px; height: 20px;"></i>
+                    </div>
+                    WASHNET
+                </a>
+                <nav class="top-nav-links">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary">Go to Dashboard</a>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="font-bold text-gray-700 hover:text-indigo-600 transition-colors px-4">Log in</a>
+                    <a href="{% url 'register' %}" class="btn btn-primary rounded-[20px] shadow-clayCard">Get Started</a>
+                    {% endif %}
+                </nav>
+            </div>
+        </header>
+        {% endif %}
+        
+        <main class="public-main {% block main_class %}{% endblock %}">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    {% endblock is_dashboard %}
+    <!-- ================= END CONDITIONAL LAYOUT ================= -->
+
+
+    <!-- AI Assistant Floating Action Button -->
+    <div class="ai-fab" onclick="alert('WASHNET AI Assistant initialization pending...')">
+        <i data-feather="message-circle"></i>
+    </div>
+    
+    <!-- Scripts -->
+    <script>
+        // Init Feather Icons
+        feather.replace();
+
+        // Auto-dismiss Django messages after 5 seconds
+        document.addEventListener("DOMContentLoaded", () => {
+            const toasts = document.querySelectorAll('.alert');
+            toasts.forEach(toast => {
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    toast.style.transition = 'all 0.4s ease';
+                    setTimeout(() => toast.remove(), 400);
+                }, 5000);
+            });
+            
+            // Mobile Sidebar Toggle Logic (for dashboard pages)
+            const menuBtn = document.getElementById('mobileMenuBtn');
+            const sidebar = document.getElementById('sidebar');
+            if(menuBtn && sidebar) {
+                menuBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('open');
+                });
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

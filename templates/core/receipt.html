@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}Receipt #{{ order.id }} - WASHNET{% endblock %}
+
+{% block content %}
+<div style="min-height: 100vh; background-color: #F4F1FA; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; position: relative;">
+
+    <!-- Top floating actions for desktop/standalone -->
+    <div style="position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: flex-end; max-width: 800px; margin: 0 auto; width: 100%;" class="print-btn">
+        <button onclick="window.print()" style="background: var(--primary); border: none; padding: 0 20px; height: 44px; border-radius: 22px; display: flex; align-items: center; gap: 8px; font-weight: 800; font-family: 'Nunito', sans-serif; cursor: pointer; color: white; box-shadow: 0 4px 6px -1px rgba(124, 58, 237, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" title="Print Receipt">
+            <i data-feather="printer" style="width: 18px; height: 18px;"></i> Print Receipt
+        </button>
+    </div>
+
+        <!-- Floating print action for mobile/tablet -->
+        <button onclick="window.print()" class="lg:hidden fixed bottom-6 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-xl flex items-center justify-center hover:bg-primary-hover transition-colors z-50 print-btn" style="border:none; cursor:pointer;">
+            <i data-feather="printer"></i>
+        </button>
+
+        <div id="receipt-container" class="receipt-wrapper">
+            <div class="receipt-header">
+                <center>
+                    <div style="width: 48px; height: 48px; background: rgba(0,0,0,0.05); color: #0f172a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+                        <i data-feather="droplet" style="width: 24px; height: 24px;"></i>
+                    </div>
+                </center>
+                <h1 style="font-size: 28px; font-weight: 900; margin: 0 0 16px 0; letter-spacing: -1px; text-transform: uppercase; text-align: center; color: #0f172a;">WASHNET</h1>
+                <p style="margin: 0 0 4px 0; font-size: 14px;"><strong>Date:</strong> {{ order.created_at|date:"M j, Y, h:i A" }}</p>
+                <p style="margin: 0 0 4px 0; font-size: 14px;"><strong>Customer:</strong> {% if order.walkin_name %}{{ order.walkin_name }}{% elif order.customer %}{{ order.customer.username }}{% else %}WALK-IN{% endif %}</p>
+                <p style="margin: 0 0 4px 0; font-size: 14px;"><strong>Cashier:</strong> SYS_{% if order.employee %}{{ order.employee.username|slice:":3"|upper }}{% else %}POS{% endif %}</p>
+                <p style="margin: 0 0 4px 0; font-size: 14px;"><strong>Ticket:</strong> #{{ order.id|stringformat:"05d" }}</p>
+            </div>
+
+            <div class="receipt-items">
+                {% if order.items.all %}
+                    {% regroup order.items.all by load_index as loads_list %}
+                    
+                    {% for load in loads_list %}
+                        {% if load.grouper != None %}
+                            <div style="margin-bottom: 12px;">
+                                <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 4px;">Load {{ load.grouper }}</div>
+                                {% for item in load.list %}
+                                    <div class="receipt-row">
+                                        <div style="padding-right: 16px;">
+                                            <div class="receipt-item-{{ item.item_type }}">
+                                                {% if item.item_type == 'ADDON' %}- {% endif %}{% if item.service %}{{ item.service.name }}{% elif item.product %}{{ item.product.name }}{% endif %}
+                                            </div>
+                                            {% if item.quantity > 1 or item.quantity < 1 %}
+                                                <div class="receipt-qty-{{ item.item_type }}" style="font-size: 12px; color: #64748b;">{{ item.quantity|floatformat:"0" }} &times; ₱{{ item.price }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div style="font-weight: 800; white-space: nowrap;">
+                                            ₱{{ item.get_total }}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div style="margin-bottom: 12px;">
+                                {% for item in load.list %}
+                                    <div class="receipt-row">
+                                        <div style="padding-right: 16px;">
+                                            <div style="font-weight: 800;">{% if item.service %}{{ item.service.name }}{% elif item.product %}{{ item.product.name }}{% endif %}</div>
+                                            {% if item.quantity > 1 or item.quantity < 1 %}
+                                                <div style="font-size: 12px; color: #64748b;">{{ item.quantity|floatformat:"0" }} &times; ₱{{ item.price }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div style="font-weight: 800; white-space: nowrap;">
+                                            ₱{{ item.get_total }}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; font-style: italic; font-size: 13px; color: #64748b; padding: 8px 0;">No itemized receipt data.</div>
+                {% endif %}
+            </div>
+
+            <div class="receipt-totals">
+                <div class="receipt-row">
+                    <span style="color: #64748b; font-weight: 600;">Subtotal</span>
+                    <span style="font-weight: 800;">₱{{ order.total_amount }}</span>
+                </div>
+                <div class="receipt-row" style="padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; margin-bottom: 12px;">
+                    <span style="color: #64748b; font-weight: 600;">Tax</span>
+                    <span style="font-weight: 800;">₱0.00</span>
+                </div>
+                <div class="receipt-row" style="font-size: 20px; align-items: flex-end; margin-top: 16px;">
+                    <span style="font-weight: 900; color: #0f172a;">TOTAL</span>
+                    <span style="font-weight: 900; letter-spacing: -0.5px; color: #0f172a;">₱{{ order.total_amount }}</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 32px;">
+                <p style="margin: 0 0 4px 0; font-size: 14px; display: flex; justify-content: space-between;"><span style="color: #64748b; font-weight: 600;">Method:</span> <strong>{{ order.get_payment_method_display }}</strong></p>
+                <p style="margin: 0; font-size: 14px; display: flex; justify-content: space-between;"><span style="color: #64748b; font-weight: 600;">Status:</span> <strong>{{ order.get_payment_status_display }}</strong></p>
+            </div>
+
+            <div style="text-align: center;">
+                <p style="font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 16px; margin-top: 0; line-height: 1.4;">Present this receipt or the QR code below for claim verification.</p>
+                {% if order.qr_code %}
+                    <img src="{{ order.qr_code.url }}" style="width: 140px; height: 140px; margin: 0 auto; display: block; object-fit: contain;">
+                {% else %}
+                    <div style="width: 140px; height: 140px; border: 2px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i data-feather="image" style="color: #cbd5e1;"></i>
+                    </div>
+                {% endif %}
+                <p style="font-weight: 900; font-size: 18px; letter-spacing: 0.1em; color: #0f172a; margin-top: 24px; margin-bottom: 0;">THANK YOU</p>
+            </div>
+        </div>
+
+</div>
+
+<style>
+    /* Thermal Receipt Styles */
+    .receipt-wrapper {
+        width: 100%;
+        max-width: 480px;
+        margin: 20px auto;
+        background: white;
+        padding: 40px 32px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05), inset 0 0 0 1px rgba(0,0,0,0.05);
+        color: #0f172a;
+        font-family: inherit; /* Inherit the global font-family */
+    }
+    
+    .receipt-header {
+        margin-bottom: 24px;
+        border-bottom: 2px dashed #cbd5e1;
+        padding-bottom: 24px;
+    }
+    
+    .receipt-items {
+        margin-bottom: 24px;
+        border-bottom: 2px dashed #cbd5e1;
+        padding-bottom: 16px;
+    }
+    
+    .receipt-item-ADDON {
+        font-weight: 600;
+        padding-left: 12px;
+        font-size: 13px;
+    }
+    
+    .receipt-item-SERVICE, .receipt-item-PRODUCT, .receipt-item- {
+        font-weight: 800;
+    }
+    
+    .receipt-qty-ADDON {
+        padding-left: 12px;
+    }
+    
+    .receipt-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 6px;
+        font-size: 15px;
+    }
+    
+    .receipt-totals {
+        margin-bottom: 24px;
+        border-bottom: 2px dashed #cbd5e1;
+        padding-bottom: 24px;
+    }
+    
+    @media print {
+        body {
+            background-color: white !important;
+        }
+        .print-btn {
+            display: none !important;
+        }
+        .receipt-wrapper {
+            box-shadow: none !important;
+            max-width: 80mm !important; /* Standard thermal width */
+            padding: 0 !important;
+            margin: 0 auto !important;
+            border-radius: 0 !important;
+            border: none !important;
+        }
+    }
+</style>
+{% endblock content %}

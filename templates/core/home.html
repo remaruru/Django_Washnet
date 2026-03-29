@@ -1,0 +1,381 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}WASHNET - The Operating System for Laundry Businesses{% endblock %}
+
+{% block is_dashboard %}
+<!-- Local Tailwind injection to isolate Hero styling -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="clay-layout min-h-screen relative">
+
+    <!-- Playful Background Blobs -->
+    <div class="blob bg-purple-300 w-[500px] h-[500px] top-[-10%] left-[-10%]"></div>
+    <div class="blob bg-blue-300 w-[400px] h-[400px] top-[20%] right-[-5%]"></div>
+    <div class="blob bg-pink-300 w-[600px] h-[600px] bottom-[10%] left-[20%] opacity-40"></div>
+
+    <!-- 1. NAVBAR -->
+    <header class="glass-panel sticky top-0 z-50 border-b border-white/40">
+        <div class="max-w-[1200px] mx-auto px-8 py-4 flex justify-between items-center">
+            <a href="{% url 'home' %}" class="flex items-center gap-2 font-nunito font-black text-2xl text-gray-800">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md text-white">
+                    <i data-feather="droplet" style="width: 20px; height: 20px;"></i>
+                </div>
+                WASHNET
+            </a>
+            
+            <nav class="hidden md:flex gap-6 items-center font-bold text-gray-600 text-sm">
+                <a href="#hero" class="hover:text-indigo-600 transition-colors nav-scroll-link">Home</a>
+                <a href="#how-it-works" class="hover:text-indigo-600 transition-colors nav-scroll-link">How It Works</a>
+                <a href="#weather" class="hover:text-indigo-600 transition-colors nav-scroll-link">Weather Forecast</a>
+                <a href="#features" class="hover:text-indigo-600 transition-colors nav-scroll-link">Features</a>
+            </nav>
+
+            <div class="flex gap-4 items-center">
+                {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="clay-btn bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-2.5 rounded-[20px] font-bold shadow-clayCard">Go to Dashboard</a>
+                {% else %}
+                <a href="{% url 'login' %}" class="font-bold text-gray-700 hover:text-indigo-600 transition-colors px-4">Login</a>
+                <a href="#cta" class="clay-btn bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-2.5 rounded-[20px] font-bold shadow-clayCard nav-scroll-link">Get Started</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. HERO SECTION -->
+    <section id="hero" class="relative z-10 max-w-[1200px] mx-auto px-8 pt-[120px] pb-[160px] flex flex-col lg:flex-row items-center gap-16 reveal-container">
+        
+        <!-- Text Content -->
+        <div class="flex-1 text-center lg:text-left">
+            <h1 class="font-nunito text-6xl md:text-7xl font-black mb-6 leading-[1.1] text-transparent bg-clip-text bg-gradient-to-br from-indigo-800 via-purple-700 to-pink-600 reveal-item">
+                Laundry Without the Hassle.
+            </h1>
+            <p class="text-xl text-gray-600 font-medium mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed reveal-item">
+                Book a pickup, follow your order in real time, and have your freshly cleaned clothes delivered straight to your door.
+            </p>
+            <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 reveal-item">
+                {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="clay-btn bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-lg px-8 py-4 rounded-[24px] font-bold shadow-clayCard flex items-center gap-2 border-2 border-white/20">
+                    Open Workspace <i data-feather="arrow-right"></i>
+                </a>
+                {% else %}
+                <a href="{% url 'register' %}" class="clay-btn bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-lg px-8 py-4 rounded-[24px] font-bold shadow-clayCard flex items-center gap-2 border-2 border-white/20">
+                    Start Free <i data-feather="zap"></i>
+                </a>
+                <a href="#features" class="clay-btn bg-white/60 text-indigo-700 text-lg px-8 py-4 rounded-[24px] font-bold shadow-clayCard backdrop-blur-md border border-white nav-scroll-link">
+                    See How It Works
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Floating Clay Composition -->
+        <div class="flex-1 relative w-full h-[500px] flex items-center justify-center reveal-item">
+            
+            <!-- Orders Card -->
+            <div class="clay-float absolute top-[10%] left-[5%] w-[260px] rounded-[32px] glass-panel shadow-clayCard p-6 border border-white/60 z-20" style="transform: rotate(-5deg);">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-[16px] bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white shadow-inner">
+                        <i data-feather="package"></i>
+                    </div>
+                    <div>
+                        <p class="font-nunito font-bold text-lg text-gray-800 leading-tight">New Order</p>
+                        <p class="text-sm text-gray-500 font-medium tracking-wide">Wash & Fold</p>
+                    </div>
+                </div>
+                <div class="h-10 bg-[#EFEBF5] rounded-[16px] shadow-clayPressed flex items-center px-4 justify-between">
+                    <span class="text-sm font-bold text-gray-600">Total</span>
+                    <span class="font-nunito font-black text-indigo-600">₱450</span>
+                </div>
+            </div>
+
+            <!-- Delivery Tracking Card -->
+            <div class="clay-float-delayed absolute bottom-[15%] right-[0%] w-[280px] rounded-[32px] glass-panel shadow-clayCard p-6 border border-white/60 z-30" style="transform: rotate(4deg);">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-[16px] bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white shadow-inner">
+                        <i data-feather="truck"></i>
+                    </div>
+                    <div>
+                        <p class="font-nunito font-bold text-lg text-gray-800 leading-tight">Rider Active</p>
+                        <p class="text-sm text-emerald-500 font-bold tracking-wide">3 mins away</p>
+                    </div>
+                </div>
+                <!-- Mini Map mockup -->
+                <div class="h-20 bg-[#EFEBF5] rounded-[16px] shadow-clayPressed relative overflow-hidden flex items-center justify-center border border-white/50">
+                    <div class="w-full h-full opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHBhdGggZD0iTTIwIDBMMjAgNDBNMCAyMEw0MCAyMCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEiLz48L3N2Zz4=')]"></div>
+                    <div class="absolute w-4 h-4 rounded-full bg-indigo-500 border-2 border-white shadow-md animate-pulse"></div>
+                </div>
+            </div>
+
+            <!-- Weather Card -->
+            <div class="clay-float-fast absolute top-[40%] left-[45%] w-[220px] rounded-[32px] glass-panel shadow-clayCard p-6 border border-white/60 z-10" style="transform: rotate(-2deg);">
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-16 h-16 rounded-[20px] bg-gradient-to-br from-yellow-300 to-orange-400 flex items-center justify-center text-white shadow-inner mb-3">
+                        <i data-feather="sun" style="width: 28px; height: 28px;"></i>
+                    </div>
+                    <p class="font-nunito font-bold text-xl text-gray-800 leading-tight">Clear Skies</p>
+                    <p class="text-sm text-gray-500 font-medium tracking-wide mb-3">High Capacity</p>
+                    <div class="px-3 py-1 bg-[#EFEBF5] rounded-full shadow-clayPressed text-xs font-bold text-orange-600">
+                        +25% Demand
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 2.5. HOW IT WORKS / STEPS -->
+    <section id="how-it-works" class="relative z-10 max-w-[1200px] mx-auto px-8 pb-[120px]">
+        <div class="text-center mb-16">
+            <h2 class="font-nunito text-4xl md:text-5xl font-black text-gray-800 mb-4">How Washnet Works</h2>
+            <p class="text-lg text-gray-600 font-medium">From your hamper back to your closet in four simple steps.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 reveal-container">
+            <!-- Step 1 -->
+            <div class="rounded-[32px] bg-white/70 backdrop-blur-xl shadow-clayCard p-6 hover:-translate-y-2 transition-all duration-300 relative pt-12 reveal-item">
+                <div class="absolute -top-5 left-6 w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 text-white font-nunito font-black flex items-center justify-center text-lg shadow-md border-2 border-white">
+                    1
+                </div>
+                <div class="w-12 h-12 rounded-[20px] bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-600 flex items-center justify-center mb-4 shadow-inner">
+                    <i data-feather="package"></i>
+                </div>
+                <h3 class="font-nunito text-xl font-bold text-gray-800 mb-2">Pickup Laundry</h3>
+                <p class="text-gray-600 text-sm font-medium leading-relaxed">We collect your laundry directly from your home at your scheduled time.</p>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="rounded-[32px] bg-white/70 backdrop-blur-xl shadow-clayCard p-6 hover:-translate-y-2 transition-all duration-300 relative pt-12 reveal-item">
+                <div class="absolute -top-5 left-6 w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 text-white font-nunito font-black flex items-center justify-center text-lg shadow-md border-2 border-white">
+                    2
+                </div>
+                <div class="w-12 h-12 rounded-[20px] bg-gradient-to-br from-purple-100 to-purple-200 text-purple-600 flex items-center justify-center mb-4 shadow-inner">
+                    <i data-feather="droplet"></i>
+                </div>
+                <h3 class="font-nunito text-xl font-bold text-gray-800 mb-2">Professional Cleaning</h3>
+                <p class="text-gray-600 text-sm font-medium leading-relaxed">Your clothes are handled, washed, dried, and folded with absolute care by experts.</p>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="rounded-[32px] bg-white/70 backdrop-blur-xl shadow-clayCard p-6 hover:-translate-y-2 transition-all duration-300 relative pt-12 reveal-item">
+                <div class="absolute -top-5 left-6 w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-pink-600 text-white font-nunito font-black flex items-center justify-center text-lg shadow-md border-2 border-white">
+                    3
+                </div>
+                <div class="w-12 h-12 rounded-[20px] bg-gradient-to-br from-pink-100 to-pink-200 text-pink-600 flex items-center justify-center mb-4 shadow-inner">
+                    <i data-feather="truck"></i>
+                </div>
+                <h3 class="font-nunito text-xl font-bold text-gray-800 mb-2">Delivery</h3>
+                <p class="text-gray-600 text-sm font-medium leading-relaxed">Our logistics riders deliver your freshly cleaned laundry straight back to your door.</p>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="rounded-[32px] bg-white/70 backdrop-blur-xl shadow-clayCard p-6 hover:-translate-y-2 transition-all duration-300 relative pt-12 reveal-item">
+                <div class="absolute -top-5 left-6 w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-white font-nunito font-black flex items-center justify-center text-lg shadow-md border-2 border-white">
+                    4
+                </div>
+                <div class="w-12 h-12 rounded-[20px] bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-600 flex items-center justify-center mb-4 shadow-inner">
+                    <i data-feather="star"></i>
+                </div>
+                <h3 class="font-nunito text-xl font-bold text-gray-800 mb-2">Ready to Wear</h3>
+                <p class="text-gray-600 text-sm font-medium leading-relaxed">Enjoy fresh, uniformly folded clothes practically identical to retail standards.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. SMART WEATHER FORECASTING -->
+    <section id="weather" class="relative z-10 max-w-[1200px] mx-auto px-8 pb-[120px]">
+        <div class="rounded-[48px] glass-panel shadow-clayCard p-8 md:p-12 border border-white/70 overflow-hidden relative">
+            
+            <!-- Card inner glow -->
+            <div class="absolute top-0 right-0 w-[300px] h-[300px] bg-yellow-200/40 rounded-full filter blur-[60px] -mr-20 -mt-20"></div>
+
+            <div class="relative z-10 text-center mb-12">
+                <h2 class="font-nunito text-4xl md:text-5xl font-black text-gray-800 mb-4">Smart Weather Forecasting</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto font-medium">
+                    The system naturally predicts laundry demand based on local weather conditions, giving you a competitive edge on staffing and machine allocation.
+                </p>
+            </div>
+
+            <div class="relative z-10 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 md:gap-6 justify-center reveal-container">
+                {% if forecast %}
+                    {% for day in forecast %}
+                    <div class="rounded-[24px] bg-[#EFEBF5] shadow-clayPressed p-5 flex flex-col items-center text-center border-t border-l border-white/50 hover:-translate-y-2 transition-transform duration-300 h-full reveal-item">
+                        <p class="font-nunito font-bold text-gray-700 mb-4 truncate w-full">{{ day.day_name }}</p>
+                        
+                        <div class="w-16 h-16 rounded-full p-4 mb-4 flex items-center justify-center text-white shadow-md hover:-translate-y-1 hover:scale-105 transition-all duration-300
+                            {% if day.score >= 85 %} bg-gradient-to-br from-yellow-400 to-orange-500
+                            {% elif day.score >= 70 %} bg-gradient-to-br from-gray-300 to-gray-500
+                            {% elif day.score >= 55 %} bg-gradient-to-br from-sky-300 to-blue-500
+                            {% else %} bg-gradient-to-br from-indigo-500 to-purple-600 {% endif %}">
+                            
+                            {% if day.score >= 85 %} <i data-feather="sun" style="width: 24px; height: 24px;"></i>
+                            {% elif day.score >= 70 %} <i data-feather="cloud" style="width: 24px; height: 24px;"></i>
+                            {% elif day.score >= 55 %} <i data-feather="wind" style="width: 24px; height: 24px;"></i>
+                            {% else %} <i data-feather="cloud-rain" style="width: 24px; height: 24px;"></i> {% endif %}
+                        </div>
+                        
+                        <p class="font-bold text-sm text-gray-800 mb-4 line-clamp-1">{{ day.condition }}</p>
+                        
+                        <!-- Recommendation Status Indicator inserted dynamically -->
+                        <div class="mt-auto w-full">
+                            {% if day.score >= 85 %}
+                                <span class="bg-blue-100 text-blue-700 rounded-full px-3 py-1.5 text-[11px] font-bold block w-full">Normal Demand</span>
+                            {% elif day.score >= 70 %}
+                                <span class="bg-zinc-200 text-zinc-700 rounded-full px-3 py-1.5 text-[11px] font-bold block w-full">Normal Capacity</span>
+                            {% elif day.score >= 55 %}
+                                <span class="bg-amber-100 text-amber-700 rounded-full px-3 py-1.5 text-[11px] font-bold block w-full">Possible Delay</span>
+                            {% else %}
+                                <span class="bg-green-100 text-green-700 rounded-full px-3 py-1.5 text-[11px] font-bold block w-full">Best Day for Laundry</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- Fallback if forecast context is empty -->
+                    <div class="col-span-full rounded-[24px] bg-[#EFEBF5] shadow-clayPressed p-8 text-center border border-white/50 text-gray-500 font-bold">
+                        Weather intelligence data gathering...
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. FEATURE GRID -->
+    <section id="features" class="relative z-10 max-w-[1200px] mx-auto px-8 pb-[120px]">
+        <div class="text-center mb-16">
+            <h2 class="font-nunito text-4xl md:text-5xl font-black text-gray-800 mb-4">Everything you need to scale</h2>
+            <p class="text-lg text-gray-600">Built natively with clay shadows and smooth interactions.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 reveal-container">
+            <div class="rounded-[32px] glass-panel shadow-clayCard p-8 border border-white/60 hover:-translate-y-2 transition-transform duration-300 reveal-item">
+                <div class="w-14 h-14 rounded-[20px] bg-gradient-to-br from-indigo-400 to-cyan-400 text-white flex items-center justify-center mb-6 shadow-inner">
+                    <i data-feather="truck"></i>
+                </div>
+                <h3 class="font-nunito text-2xl font-bold text-gray-800 mb-3">Rider Logistics</h3>
+                <p class="text-gray-600 leading-relaxed font-medium">Dedicated mobile workflows for fleet drivers to map optimal routes and ping live status.</p>
+            </div>
+            <div class="rounded-[32px] glass-panel shadow-clayCard p-8 border border-white/60 hover:-translate-y-2 transition-transform duration-300 reveal-item">
+                <div class="w-14 h-14 rounded-[20px] bg-gradient-to-br from-purple-400 to-pink-500 text-white flex items-center justify-center mb-6 shadow-inner">
+                    <i data-feather="activity"></i>
+                </div>
+                <h3 class="font-nunito text-2xl font-bold text-gray-800 mb-3">Order Pipeline</h3>
+                <p class="text-gray-600 leading-relaxed font-medium">Items flow synchronously through an explicit operational pipeline guaranteeing tight accountability.</p>
+            </div>
+            <div class="rounded-[32px] glass-panel shadow-clayCard p-8 border border-white/60 hover:-translate-y-2 transition-transform duration-300 reveal-item">
+                <div class="w-14 h-14 rounded-[20px] bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center mb-6 shadow-inner">
+                    <i data-feather="monitor"></i>
+                </div>
+                <h3 class="font-nunito text-2xl font-bold text-gray-800 mb-3">POS Checkout</h3>
+                <p class="text-gray-600 leading-relaxed font-medium">High-velocity point-of-sale terminal built for walk-ins with thermal receipt mapping.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. CALL TO ACTION -->
+    <section id="cta" class="relative z-10 max-w-[1200px] mx-auto px-8 pb-[120px] text-center reveal-container">
+        <h2 class="font-nunito text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-indigo-800 via-purple-700 to-pink-600 mb-8 max-w-3xl mx-auto leading-tight reveal-item">
+            Start running your laundry operations like a modern startup.
+        </h2>
+        {% if user.is_authenticated %}
+        <a href="{% url 'dashboard' %}" class="clay-btn bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xl px-12 py-5 rounded-[28px] font-bold shadow-clayCard inline-flex items-center gap-3 border-2 border-white/20 reveal-item">
+            Go to Dashboard <i data-feather="arrow-right"></i>
+        </a>
+        {% else %}
+        <a href="{% url 'register' %}" class="clay-btn bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xl px-12 py-5 rounded-[28px] font-bold shadow-clayCard inline-flex items-center gap-3 border-2 border-white/20 reveal-item">
+            Get Started Now
+        </a>
+        {% endif %}
+    </section>
+
+    <!-- 6. FOOTER -->
+    <footer class="relative z-10 max-w-[1200px] mx-auto px-8 py-8 border-t border-indigo-100/50 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="font-nunito font-black text-xl text-gray-400 flex items-center gap-2">
+            <i data-feather="droplet" style="width: 18px; height: 18px;"></i> WASHNET
+        </div>
+        <div class="text-gray-500 font-medium">
+            &copy; 2026 Washnet. All rights reserved.
+        </div>
+    </footer>
+
+</div>
+
+<script>
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+
+    function initRevealAnimations() {
+        // Automatically inject staggered delays for matching items inside a container
+        document.querySelectorAll('.reveal-container').forEach(container => {
+            Array.from(container.querySelectorAll('.reveal-item')).forEach((el, index) => {
+                el.style.transitionDelay = `${index * 100}ms`;
+            });
+        });
+
+        // Enforce animations regardless of OS settings for this presentation
+        const prefersReducedMotion = false; 
+        
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const observer = new IntersectionObserver((entries, observerObj) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('reveal-visible');
+                    // We unobserve so it only happens once during normal scroll
+                    observerObj.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        if (!prefersReducedMotion) {
+            // Observe every default hidden item EXCLUDING the Hero section
+            document.querySelectorAll('.reveal-item').forEach(el => {
+                if (!el.closest('#hero')) {
+                    observer.observe(el);
+                }
+            });
+
+            // Explicitly force Hero load animation independently of scrolling
+            setTimeout(() => {
+                document.querySelectorAll('#hero .reveal-item').forEach(el => {
+                    el.classList.add('reveal-visible');
+                });
+            }, 100);
+        }
+
+        // Replay Animations on Header Link Clicks
+        document.querySelectorAll('.nav-scroll-link').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const targetId = this.getAttribute('href');
+                if (targetId && targetId.startsWith('#') && !prefersReducedMotion) {
+                    const targetSection = document.querySelector(targetId);
+                    if (targetSection) {
+                        const items = targetSection.querySelectorAll('.reveal-item');
+                        
+                        // Reset elements back to their hidden state to prepare for scroll-reveal
+                        items.forEach(el => {
+                            el.classList.remove('reveal-visible');
+                            el.style.transition = 'none'; // Disable transition for instant snap
+                            void el.offsetHeight; // Force reflow
+                            el.style.transition = ''; // Restore CSS transitions
+                            
+                            // Re-attach the observer so they naturally reveal exactly when the smooth-scroll reaches them
+                            observer.observe(el);
+                        });
+                    }
+                }
+            });
+        });
+    }
+
+    // Execute immediately if DOM is already parsed, otherwise wait for load bounds.
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initRevealAnimations);
+    } else {
+        initRevealAnimations();
+    }
+</script>
+{% endblock is_dashboard %}

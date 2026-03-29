@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Add User - WASHNET Admin{% endblock %}
+
+{% block content %}
+<div class="bg-background min-h-[calc(100vh-64px)] py-12 px-4">
+    <div class="saas-card shadow-xl max-w-xl mx-auto p-8 border-t-4 border-t-primary">
+        <div class="mb-8">
+            <h1 class="text-2xl font-black text-main m-0 mb-2">Add New System User</h1>
+            <p class="text-muted font-bold text-sm m-0">Create new employee, customer, rider, or admin accounts directly.</p>
+        </div>
+
+        <form method="POST" class="m-0 flex flex-col gap-5">
+            {% csrf_token %}
+            
+            {% for field in form %}
+            <div class="form-group m-0">
+                <label for="{{ field.id_for_label }}" class="form-label font-bold">{{ field.label }}</label>
+                
+                <div class="w-full">
+                    <!-- Standardize input appearance, Django will inject the input itself -->
+                    <div class="auth-input-wrapper [&>input]:form-control [&>select]:form-control [&>input]:font-semibold [&>select]:font-semibold">
+                        {{ field }}
+                    </div>
+                </div>
+                
+                {% if field.help_text %}
+                <p class="text-xs font-semibold text-muted mt-1.5 leading-snug">{{ field.help_text }}</p>
+                {% endif %}
+                
+                {% if field.errors %}
+                <div class="text-xs font-bold text-error mt-1.5 p-2 bg-red-50 rounded border border-red-100">{{ field.errors }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="mt-8 flex gap-4 pt-6 border-t border-border">
+                <button type="submit" class="btn btn-primary flex-1 py-3 text-base font-bold shadow-md">Create User</button>
+                <a href="{% url 'admin_users' %}" class="btn btn-ghost flex-1 py-3 text-base font-bold border border-border">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Ensure Django's raw HTML form injections wrap inside the control constraint */
+    .auth-input-wrapper input, .auth-input-wrapper select {
+        width: 100%;
+        display: block;
+    }
+</style>
+{% endblock %}

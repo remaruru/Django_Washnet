@@ -1,0 +1,215 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Route History - WASHNET Rider{% endblock %}
+
+{% block sidebar_nav %}
+    <p style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2); padding: 0 var(--space-4); margin-top: var(--space-2);">My Routes</p>
+    <a href="{% url 'delivery_dashboard' %}" class="sidebar-link" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
+        <i data-feather="map" style="width: 18px; height: 18px;"></i> Active Deliveries
+    </a>
+    <a href="{% url 'delivery_history' %}" class="sidebar-link active" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--primary); background: var(--primary-light); font-weight: 700;">
+        <i data-feather="clock" style="width: 18px; height: 18px;"></i> History
+    </a>
+{% endblock %}
+
+{% block header_title %}
+<div style="display: flex; flex-direction: column;">
+    <h1 style="font-size: var(--text-xl); font-weight: 900; color: var(--text-main); margin: 0; line-height: 1.2; font-family: 'Nunito', sans-serif;">Route History</h1>
+    <span style="font-size: var(--text-xs); color: var(--text-muted); font-weight: 800; margin-top: 2px; display: flex; align-items: center; gap: 4px;">
+        <i data-feather="archive" style="width: 12px; height: 12px;"></i> Past Completed Jobs
+    </span>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<div style="display: flex; align-items: center; gap: var(--space-3);">
+    <div style="text-align: right;">
+        <p style="font-size: var(--text-sm); font-weight: 800; color: var(--text-main); margin: 0;">{{ user.username }}</p>
+        <p style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted); margin: 0; letter-spacing: 0.05em; text-transform: uppercase;">Fleet Rider</p>
+    </div>
+    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--text-main); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; box-shadow: var(--shadow-clay-card); position: relative;">
+        {{ user.username|make_list|first|upper }}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8); padding-bottom: var(--space-12);">
+
+    <section>
+        <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4);">
+            <div style="width: 32px; height: 32px; border-radius: var(--radius-md); background: rgba(59, 130, 246, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-clay-card);">
+                <i data-feather="check-circle" style="width: 16px; height: 16px;"></i>
+            </div>
+            <h2 style="font-size: var(--text-lg); font-weight: 900; color: var(--text-main); margin: 0; font-family: 'Nunito', sans-serif;">Completed Orders</h2>
+            <span class="clay-badge clay-badge-indigo" style="margin-left: auto;">{{ past_jobs|length }}</span>
+        </div>
+
+        {% if past_jobs %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4);">
+            {% for job in past_jobs %}
+            <div class="clay-card" style="border: 2px solid rgba(148, 163, 184, 0.3); display: flex; flex-direction: column; height: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3);">
+                    <span class="clay-badge clay-badge-gray" style="text-transform: uppercase; font-weight: 900; letter-spacing: 0.05em;">Order #{{ job.id }}</span>
+                    <span class="clay-badge" style="background: rgba(16,185,129,0.1); color: var(--secondary); font-size: 10px; font-weight: 800;">{{ job.get_status_display }}</span>
+                </div>
+                
+                <h3 style="font-size: var(--text-base); font-weight: 900; color: var(--text-main); margin-bottom: 4px;">{% if job.customer %}{{ job.customer.username }}{% else %}{{ job.walkin_name }}{% endif %}</h3>
+                <p style="font-size: var(--text-sm); font-weight: 700; color: var(--text-muted); display: flex; align-items: flex-start; gap: 6px; margin-bottom: var(--space-2);">
+                    <i data-feather="map-pin" style="width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px;"></i> 
+                    {% if job.customer %}{{ job.customer.address|default:"No address stored" }}{% else %}Walk-in{% endif %}
+                </p>
+
+                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: var(--space-4);">
+                    <p style="font-size: var(--text-sm); font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 6px; background: var(--surface); padding: 4px 8px; border-radius: var(--radius-md); border: 1px solid var(--border); box-shadow: var(--shadow-clay-card); width: fit-content; margin: 0;">
+                        <i data-feather="calendar" style="color: var(--primary); width: 14px; height: 14px;"></i>
+                        {{ job.updated_at|date:"M j, P" }}
+                    </p>
+                    <p style="font-size: var(--text-sm); font-weight: 900; color: var(--secondary); margin: 0;">
+                        ₱{{ job.total_amount }}
+                    </p>
+                </div>
+
+                <div style="margin-top: auto; display: flex; gap: 8px;">
+                    <button type="button" onclick="openOrderModal('modal_history_{{ job.id }}')" class="clay-btn clay-btn-ghost" style="width: 100%; border: 1px solid var(--border); padding: 10px; font-weight: 800; font-size: var(--text-xs); display: flex; justify-content: center; background: #ffffff;">
+                        View Details
+                    </button>
+                    <a href="{% url 'order_receipt' job.id %}" target="_blank" class="clay-btn clay-btn-primary" style="padding: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i data-feather="printer" style="width: 16px; height: 16px;"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="clay-card" style="text-align: center; color: var(--text-muted); padding: var(--space-6); border: 2px dashed var(--border); box-shadow: none;">
+            <i data-feather="archive" style="margin: 0 auto var(--space-2) auto; opacity: 0.5; width: 24px; height: 24px;"></i>
+            <p style="font-weight: 700; font-size: var(--text-sm); margin: 0;">You have not completed any orders yet.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Modals -->
+    {% for job in past_jobs %}
+    <div id="modal_history_{{ job.id }}" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); z-index: 50; display: none; align-items: center; justify-content: center; padding: 16px; opacity: 0; transition: opacity 0.2s;">
+        <div class="clay-card" style="width: 100%; max-width: 600px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; transform: scale(0.95); transition: transform 0.2s; padding: 0; background: #ffffff; backdrop-filter: none;">
+            
+            <!-- Modal Header -->
+            <div style="padding: 24px 32px; border-bottom: 1px solid rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: flex-start; background: #f8fafc; flex-shrink: 0;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main); margin: 0; letter-spacing: -0.02em;">Order #{{ job.id }}</h2>
+                        <span class="clay-badge clay-badge-indigo" style="font-size: 12px; padding: 4px 10px; border-radius: 6px; font-weight: 800;">
+                            {% if job.customer %}{{ job.customer.username }}{% else %}{{ job.walkin_name }}{% endif %}
+                        </span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px; color: var(--text-muted); font-size: var(--text-sm); font-weight: 700;">
+                        <span style="display: flex; align-items: center; gap: 6px;"><i data-feather="calendar" style="width: 14px; height: 14px;"></i> Created: {{ job.created_at|date:"M j, Y • g:i a" }}</span>
+                        <span style="display: flex; align-items: center; gap: 6px; color: var(--primary);"><i data-feather="check-circle" style="width: 14px; height: 14px;"></i> Completed: {{ job.updated_at|date:"M j, Y • g:i a" }}</span>
+                    </div>
+                </div>
+                <!-- Right: Close -->
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
+                     <button type="button" onclick="closeOrderModal('modal_history_{{ job.id }}')" style="width: 32px; height: 32px; border-radius: 50%; background: var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                        <i data-feather="x" style="width: 16px; height: 16px;"></i>
+                    </button>
+                    <p style="font-size: 28px; font-weight: 900; color: var(--secondary); margin: 0; line-height: 1; font-family: 'Nunito', sans-serif; letter-spacing: -0.02em;">₱{{ job.total_amount }}</p>
+                </div>
+            </div>
+            
+            <!-- Modal Body (Scrollable) -->
+            <div style="padding: 32px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 24px; background: #ffffff;" class="custom-scrollbar">
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                    <div>
+                        <p style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 4px 0;">Order Type</p>
+                        <p style="font-size: 15px; font-weight: 800; color: var(--text-main); margin: 0;">{{ job.get_order_type_display }}</p>
+                    </div>
+                    <div>
+                        <p style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 4px 0;">Payment Method</p>
+                        <p style="font-size: 15px; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 6px;">
+                            <i data-feather="{% if job.payment_method == 'CASH' %}dollar-sign{% else %}smartphone{% endif %}" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
+                            {{ job.get_payment_method_display }}
+                        </p>
+                    </div>
+                    <div>
+                        <p style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 4px 0;">Payment Status</p>
+                        <p class="payment-status-{{ job.payment_status }}" style="font-size: 15px; font-weight: 900; margin: 0;">
+                            {{ job.get_payment_status_display }}
+                        </p>
+                    </div>
+                </div>
+
+                <div style="height: 1px; background: rgba(0,0,0,0.3); margin: 0;"></div>
+
+                <!-- Load Breakdown -->
+                {% if job.items.all %}
+                <div>
+                    <h3 style="font-size: 14px; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+                        <i data-feather="layers" style="width: 18px; height: 18px; color: var(--text-muted);"></i> Delivery Load Synopsis
+                    </h3>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        {% regroup job.items.all by load_index as loads_list %}
+                        {% for load in loads_list %}
+                            {% if load.grouper != None %}
+                                <div style="background: var(--surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border);">
+                                    <h4 style="font-size: 14px; font-weight: 900; color: var(--text-muted); margin: 0 0 8px 0; text-transform: uppercase;">Load {{ load.grouper }}</h4>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        {% for item in load.list %}
+                                            {% if item.item_type == 'SERVICE' and item.service %}
+                                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px;">
+                                                <span style="font-weight: 800; color: var(--text-main);">{{ item.service.name }}</span>
+                                                <span style="font-weight: 800; color: var(--text-muted);">&times; {{ item.quantity|floatformat:"0" }}</span>
+                                            </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    function openOrderModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.style.display = 'flex';
+            // Trigger reflow
+            void modal.offsetWidth;
+            modal.style.opacity = '1';
+            modal.children[0].style.transform = 'scale(1)';
+        }
+    }
+    
+    function closeOrderModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.style.opacity = '0';
+            modal.children[0].style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 200);
+        }
+    }
+
+    // Close when clicking outside of modal card
+    window.addEventListener('click', function(event) {
+        if (event.target.id && event.target.id.startsWith('modal_history_')) {
+            closeOrderModal(event.target.id);
+        }
+    });
+</script>
+{% endblock %}

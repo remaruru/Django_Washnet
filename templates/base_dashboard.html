@@ -1,0 +1,102 @@
+{% extends 'base_core.html' %}
+{% load static %}
+
+{% block body_class %}dashboard-layout{% endblock %}
+
+{% block layout %}
+    <!-- Claymorphism Blob Canvas -->
+    <div style="position: absolute; top: -10%; left: -10%; width: 500px; height: 500px; background: #d8b4fe; border-radius: 50%; filter: blur(80px); z-index: 0; opacity: 0.4; pointer-events: none;"></div>
+    <div style="position: absolute; top: 20%; right: -5%; width: 400px; height: 400px; background: #93c5fd; border-radius: 50%; filter: blur(80px); z-index: 0; opacity: 0.3; pointer-events: none;"></div>
+    <div style="position: absolute; bottom: -10%; left: 20%; width: 600px; height: 600px; background: #f9a8d4; border-radius: 50%; filter: blur(80px); z-index: 0; opacity: 0.2; pointer-events: none;"></div>
+
+    <div style="position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: row;">
+        
+        <!-- Sidebar Application Shell -->
+        <aside class="sidebar" id="sidebar" style="position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-right: 1px solid var(--border); width: 256px; z-index: 40; flex-shrink: 0;">
+            <div style="padding: var(--space-4); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+                <a href="{% url 'home' %}" style="display: flex; align-items: center; gap: var(--space-2); text-decoration: none;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6, #d946ef); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-clay-card); color: white;">
+                        <i data-feather="droplet" style="width: 20px; height: 20px;"></i>
+                    </div>
+                    <span style="font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.25rem; color: var(--text-main); letter-spacing: -0.02em;">WASHNET</span>
+                </a>
+                <button id="mobileMenuCloseBtn" style="display: none; background: none; border: none; cursor: pointer;">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Navigation -->
+            <nav style="flex: 1; overflow-y: auto; padding: var(--space-4);">
+                {% block sidebar_nav %}{% endblock %}
+            </nav>
+
+            <!-- Bottom Action -->
+            <div style="padding: var(--space-4); border-top: 1px solid var(--border);">
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="clay-btn clay-btn-ghost" style="width: 100%; justify-content: flex-start; color: var(--error);">
+                        <i data-feather="log-out"></i> Log out
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Body -->
+        <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+            
+            <header style="height: 64px; position: sticky; top: 0; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-6); z-index: 30;">
+                <div style="display: flex; align-items: center; gap: var(--space-4);">
+                    <button id="mobileMenuBtn" style="display: none; background: none; border: none; cursor: pointer; color: var(--text-main);">
+                        <i data-feather="menu"></i>
+                    </button>
+                    <!-- Inherit text scale via typography helper if possible -->
+                    <h1 style="font-size: var(--text-lg); margin: 0; font-family: 'Nunito', sans-serif; font-weight: 800;">{% block header_title %}Dashboard{% endblock %}</h1>
+                </div>
+
+                {% block header_actions %}
+                <div style="display: flex; align-items: center; gap: var(--space-4);">
+                    <span class="clay-badge clay-badge-indigo" style="font-size: var(--text-xs);">{{ user.username }} ({{ user.role|title }})</span>
+                </div>
+                {% endblock %}
+            </header>
+
+            <!-- Scrollable Dashboard Content -->
+            <main style="flex: 1; padding: var(--space-6);">
+                <div style="max-width: 1200px; margin: 0 auto;">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const menuBtn = document.getElementById('mobileMenuBtn');
+        const closeBtn = document.getElementById('mobileMenuCloseBtn');
+        const sidebar = document.getElementById('sidebar');
+
+        // Optional mobile responsiveness if needed
+        if(window.innerWidth <= 768) {
+            menuBtn.style.display = 'block';
+            sidebar.style.position = 'absolute';
+            sidebar.style.left = '-256px';
+            sidebar.style.height = '100%';
+            sidebar.style.transition = 'left 0.3s ease';
+        }
+
+        if(menuBtn && sidebar) {
+            menuBtn.addEventListener('click', () => {
+                sidebar.style.left = '0';
+                if(closeBtn) closeBtn.style.display = 'block';
+            });
+        }
+        if(closeBtn && sidebar) {
+            closeBtn.addEventListener('click', () => {
+                sidebar.style.left = '-256px';
+            });
+        }
+    });
+</script>
+{% endblock %}
