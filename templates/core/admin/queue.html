@@ -38,85 +38,232 @@
 
 {% block content %}
 <div style="padding-bottom: var(--space-12);">
+    
     <!-- Filter Bar -->
     <div class="clay-card" style="margin-bottom: var(--space-6); padding: var(--space-4); display: flex; justify-content: space-between; align-items: center; background: var(--surface);">
         <div style="display: flex; align-items: center; gap: var(--space-3);">
             <i data-feather="filter" style="width: 20px; height: 20px; color: var(--primary);"></i>
-            <h3 style="font-size: var(--text-base); font-weight: 800; color: var(--text-main); margin: 0;">Date Filters</h3>
+            <h3 style="font-size: var(--text-base); font-weight: 800; color: var(--text-main); margin: 0;">Data Filters</h3>
             <span class="clay-badge clay-badge-indigo" style="font-size: 11px;">Selected: {{ selected_filter }}</span>
         </div>
         
         <form method="GET" action="" style="display: flex; gap: var(--space-4); margin: 0; align-items: flex-end;">
+            <div style="display: flex; gap: var(--space-2); margin-right: var(--space-4);">
+                <button type="submit" name="quick_filter" value="today" class="clay-btn {% if quick_filter == 'today' %}clay-btn-primary{% else %}clay-btn-secondary{% endif %}" style="padding: 0 12px; height: 32px; font-size: 12px; margin-bottom: 4px;">Today</button>
+                <button type="submit" name="quick_filter" value="this_week" class="clay-btn {% if quick_filter == 'this_week' %}clay-btn-primary{% else %}clay-btn-secondary{% endif %}" style="padding: 0 12px; height: 32px; font-size: 12px; margin-bottom: 4px;">This Week</button>
+                <button type="submit" name="quick_filter" value="this_month" class="clay-btn {% if quick_filter == 'this_month' %}clay-btn-primary{% else %}clay-btn-secondary{% endif %}" style="padding: 0 12px; height: 32px; font-size: 12px; margin-bottom: 4px;">This Month</button>
+                <button type="submit" name="quick_filter" value="all_time" class="clay-btn {% if quick_filter == 'all_time' or not quick_filter %}clay-btn-primary{% else %}clay-btn-secondary{% endif %}" style="padding: 0 12px; height: 32px; font-size: 12px; margin-bottom: 4px;">All Time</button>
+            </div>
             <div style="display: flex; flex-direction: column; gap: 4px;">
                 <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">By Day</label>
-                <input type="date" name="date" class="clay-input" value="{{ filter_date_str }}" style="padding: 8px 12px; font-size: var(--text-sm); font-weight: 700; max-height: 40px;">
+                <input type="date" name="date" class="clay-input" value="{{ filter_date_str }}" style="padding: 6px 12px; font-size: var(--text-sm); font-weight: 700; height: 36px;">
             </div>
             <div style="display: flex; flex-direction: column; gap: 4px;">
                 <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">By Month</label>
-                <input type="month" name="month" class="clay-input" value="{{ filter_month_str }}" style="padding: 8px 12px; font-size: var(--text-sm); font-weight: 700; max-height: 40px;">
+                <input type="month" name="month" class="clay-input" value="{{ filter_month_str }}" style="padding: 6px 12px; font-size: var(--text-sm); font-weight: 700; height: 36px;">
             </div>
-            <div style="display: flex; gap: var(--space-2);">
-                <button type="submit" class="clay-btn clay-btn-primary" style="padding: 0 16px; height: 40px; font-size: var(--text-sm);">Apply</button>
-                <a href="{% url 'admin_queue' %}" class="clay-btn clay-btn-ghost" style="padding: 0 16px; height: 40px; font-size: var(--text-sm); border: 1px solid var(--border);">Reset</a>
+            <div style="display: flex; gap: var(--space-2); margin-bottom: 2px;">
+                <button type="submit" class="clay-btn clay-btn-primary" style="padding: 0 16px; height: 36px; font-size: var(--text-sm);">Apply</button>
+                <a href="{% url 'admin_queue' %}" class="clay-btn clay-btn-ghost" style="padding: 0 16px; height: 36px; font-size: var(--text-sm); border: 1px solid var(--border);">Reset</a>
             </div>
         </form>
     </div>
 
-    <!-- Filtered Machine Queue -->
-    <div class="clay-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-        <div style="padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--border); background: var(--surface); display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="font-size: var(--text-lg); font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: var(--space-2);">
-                <i data-feather="list" style="color: var(--text-muted);"></i> Operations Machine Queue
-            </h2>
-            <div style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Matches Active Dates ({{ active_orders_count }})</div>
+    <!-- Queue KPI Summary Row -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-6);">
+        <div class="clay-card" style="padding: var(--space-4); text-align: center;">
+            <p style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin: 0 0 8px 0;">Total Configured Items</p>
+            <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main); margin: 0;">{{ active_orders_count }}</h2>
         </div>
+        <div class="clay-card" style="padding: var(--space-4); text-align: center; border-left: 4px solid var(--error);">
+            <p style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin: 0 0 8px 0;">At Shop (Queued)</p>
+            <h2 style="font-size: 24px; font-weight: 900; color: var(--error); margin: 0;">{{ at_shop_count }}</h2>
+        </div>
+        <div class="clay-card" style="padding: var(--space-4); text-align: center; border-left: 4px solid #f59e0b;">
+            <p style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin: 0 0 8px 0;">Processing</p>
+            <h2 style="font-size: 24px; font-weight: 900; color: #f59e0b; margin: 0;">{{ processing_count }}</h2>
+        </div>
+        <div class="clay-card" style="padding: var(--space-4); text-align: center; border-left: 4px solid var(--secondary);">
+            <p style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin: 0 0 8px 0;">Ready for Delivery/Pickup</p>
+            <h2 style="font-size: 24px; font-weight: 900; color: var(--secondary); margin: 0;">{{ ready_count }}</h2>
+        </div>
+    </div>
+
+    <!-- Main Operational Grid -->
+    <div style="display: flex; flex-direction: column; gap: var(--space-6);">
         
-        <div class="clay-table-wrapper" style="box-shadow: none; border-radius: 0; border: none; padding: 0;">
-            <div style="overflow-x: auto;">
-                {% if active_orders %}
-                <table class="clay-table" style="margin: 0; width: 100%;">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Timestamp</th>
-                            <th>Customer</th>
-                            <th>Pipeline Mode</th>
-                            <th style="text-align: right;">Admin Override</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for order in active_orders %}
-                        <tr>
-                            <td style="font-weight: 900; color: var(--text-main);">#{{ order.id }}</td>
-                            <td style="font-weight: 700; color: var(--text-muted); font-size: 12px;">{{ order.created_at|date:"M j, g:i a" }}</td>
-                            <td style="font-weight: 800;">{% if order.customer %}{{ order.customer.username }}{% elif order.walkin_name %}{{ order.walkin_name }}{% else %}<span style="color: var(--text-muted); font-style: italic;">Walk-in</span>{% endif %}</td>
-                            <td><span class="clay-badge clay-badge-gray" style="font-size: 10px;">{{ order.get_order_type_display }}</span></td>
-                            <td style="display: flex; justify-content: flex-end;">
-                                <form method="POST" action="{% url 'update_order_status' order.id %}" style="margin: 0; width: 160px;">
-                                    {% csrf_token %}
-                                    <div style="position: relative;">
-                                        <select name="status" onchange="this.form.submit()" class="clay-input" style="font-size: 11px; font-weight: 800; padding: 4px 12px; padding-right: 28px; appearance: none; cursor: pointer; min-height: 28px;">
-                                            {% for status_val, status_label in order.status_choices_list %}
-                                                <option value="{{ status_val }}" {% if order.status == status_val %}selected{% endif %}>{{ status_label }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-muted);">
-                                            <i data-feather="chevron-down" style="width: 12px; height: 12px;"></i>
-                                        </div>
-                                    </div>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <div style="padding: var(--space-8); text-align: center; color: var(--text-muted);">
-                    <p style="font-weight: 700; font-size: var(--text-sm); margin: 0;">No operational orders exist or fall within this timespan.</p>
-                </div>
-                {% endif %}
+        {% if not active_orders %}
+            <div class="clay-card" style="padding: var(--space-12); text-align: center;">
+                <i data-feather="inbox" style="width: 48px; height: 48px; color: var(--border); margin-bottom: var(--space-4);"></i>
+                <h3 style="font-size: var(--text-lg); font-weight: 800; color: var(--text-muted); margin: 0;">Machine Queue is Empty</h3>
+                <p style="font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); max-width: 400px; margin: 8px auto 0;">No operational orders (At Shop, Processing, or Ready) exist within this timeline.</p>
             </div>
-        </div>
+        {% else %}
+
+            <!-- Output clustered by stage to provide operational clarity -->
+            {% for stage_label, stage_color, stage_value in 'At Shop (Queued)|var(--error)|AT_SHOP,Processing (In Machine)|#f59e0b|PROCESSING,Ready for Pickup / Delivery|var(--secondary)|READY_FOR_DELIVERY'|slice:0 %}
+                ... Wait I can't do complex splits easily in Django template without custom filters. Let's just output them as they are ordered, but render a detailed card for each.
+            {% endfor %}
+
+            {% for order in active_orders %}
+            <div class="clay-card" style="padding: 0; display: flex; flex-direction: column; overflow: hidden; border-left: 6px solid {% if order.status == 'AT_SHOP' %}var(--error){% elif order.status == 'PROCESSING' %}#f59e0b{% elif order.status == 'READY_FOR_DELIVERY' %}var(--secondary){% else %}var(--border){% endif %};">
+                
+                <!-- HEADER ROW -->
+                <div style="padding: var(--space-3) var(--space-4); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: var(--space-4);">
+                        <h3 style="margin: 0; font-size: 16px; font-weight: 900; color: var(--text-main);">Order #{{ order.id }}</h3>
+                        <span class="clay-badge clay-badge-gray" style="font-size: 10px;">{{ order.get_order_type_display }}</span>
+                        <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">
+                            <i data-feather="clock" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 2px;"></i>
+                            {{ order.created_at|date:"M j, g:i a" }}
+                        </span>
+                    </div>
+
+                    <!-- Status Update Form -->
+                    <div style="display: flex; align-items: center; gap: var(--space-3);">
+                        <form method="POST" action="{% url 'update_order_status' order.id %}" style="margin: 0; width: 220px;">
+                            {% csrf_token %}
+                            <div style="position: relative;">
+                                <select name="status" onchange="this.form.submit()" class="clay-input" style="font-size: 12px; font-weight: 800; padding: 6px 14px; appearance: none; cursor: pointer;">
+                                    {% for status_val, status_label in order.status_choices_list %}
+                                        <option value="{{ status_val }}" {% if order.status == status_val %}selected{% endif %}>{{ status_label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-muted);">
+                                    <i data-feather="chevron-down" style="width: 14px; height: 14px;"></i>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- MAIN DETAILS GRID -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 0;">
+                    
+                    <!-- Handler / Personnel Cell -->
+                    <div style="padding: var(--space-4); border-right: 1px solid var(--border);">
+                        <p style="font-size: 10px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin: 0 0 12px 0;">Actors & Target</p>
+                        
+                        <!-- Customer -->
+                        <div style="margin-bottom: 12px; display: flex; align-items: flex-start; gap: 8px;">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(59,130,246,0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i data-feather="user" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <div>
+                                <span style="display: block; font-size: 13px; font-weight: 800; color: var(--text-main);">
+                                    {% if order.customer %}{{ order.customer.first_name }} {{ order.customer.last_name }}{% elif order.walkin_name %}{{ order.walkin_name }}{% else %}Walk-in Guest{% endif %}
+                                </span>
+                                <span style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted);">
+                                    {% if order.customer and order.customer.phone_number %}{{ order.customer.phone_number }}{% else %}No contact{% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Employee -->
+                        <div style="margin-bottom: 12px; display: flex; align-items: flex-start; gap: 8px;">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99,102,241,0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i data-feather="briefcase" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <div>
+                                <span style="display: block; font-size: 13px; font-weight: 800; color: var(--text-main);">
+                                    {% if order.employee %}{{ order.employee.username|title }}{% else %}<span style="color: var(--error);">Unassigned / Unclaimed</span>{% endif %}
+                                </span>
+                                <span style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted);">Assigned Employee</span>
+                            </div>
+                        </div>
+
+                        <!-- Rider -->
+                        {% if order.order_type == 'DELIVERY' or order.order_type == 'APPOINTMENT' %}
+                        <div style="display: flex; align-items: flex-start; gap: 8px;">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245,158,11,0.1); color: #f59e0b; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i data-feather="truck" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <div>
+                                <span style="display: block; font-size: 13px; font-weight: 800; color: var(--text-main);">
+                                    {% if order.rider %}{{ order.rider.username|title }}{% else %}No rider assigned yet{% endif %}
+                                </span>
+                                <span style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted);">Logistics</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Payment Information -->
+                    <div style="padding: var(--space-4); border-right: 1px solid var(--border);">
+                        <p style="font-size: 10px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin: 0 0 12px 0;">Financial State</p>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Medium</span>
+                            {% if order.payment_method == 'GCASH' %}
+                                <span style="font-size: 13px; font-weight: 900; color: #3b82f6;">GCash</span>
+                                {% if order.payment_reference %}
+                                    <div style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin-top: 2px;">Ref: {{ order.payment_reference }}</div>
+                                {% endif %}
+                            {% elif order.payment_method == 'PAYPAL' %}
+                                <span style="font-size: 13px; font-weight: 900; color: #10b981;">PayPal (Card)</span>
+                            {% else %}
+                                <span style="font-size: 13px; font-weight: 900; color: var(--text-main);">Physical Cash</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Settlement</span>
+                            {% if order.payment_status == 'PAID' %}
+                                <span class="clay-badge clay-badge-green" style="font-size: 10px;"><i data-feather="check" style="width:10px;"></i> Settled</span>
+                            {% else %}
+                                <span class="clay-badge clay-badge-red" style="font-size: 10px;">Unpaid</span>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Grand Total</span>
+                            <span style="font-size: 18px; font-weight: 900; color: var(--text-main);">₱{{ order.total_amount|floatformat:2 }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Services Breakdown -->
+                    <div style="padding: var(--space-4); background: rgba(0,0,0,0.01);">
+                        <p style="font-size: 10px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; margin: 0 0 12px 0;">Load Breakdown</p>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            {% if order.items.all %}
+                                {% for item in order.items.all %}
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: white; border: 1px solid var(--border); border-radius: 6px;">
+                                        <div style="display: flex; flex-direction: column;">
+                                            <span style="font-size: 13px; font-weight: 800; color: var(--text-main);">
+                                                {{ item.quantity|floatformat:0 }}x 
+                                                {% if item.item_type == 'SERVICE' and item.service %}
+                                                    {{ item.service.name }}
+                                                {% elif item.item_type == 'ADDON' or item.item_type == 'PRODUCT' %}
+                                                    {{ item.product.name }}
+                                                {% else %}
+                                                    Item
+                                                {% endif %}
+                                            </span>
+                                            {% if item.load_index %}
+                                                <span style="font-size: 10px; font-weight: 700; color: var(--primary);">Mapped to Load #{{ item.load_index }}</span>
+                                            {% endif %}
+                                            {% if item.notes %}
+                                                <span style="font-size: 11px; font-weight: 700; color: #a16207; margin-top: 4px; display: inline-flex; align-items: flex-start; background: #fefce8; padding: 4px 6px; border-radius: 4px; border-left: 3px solid #eab308; line-height: 1.3;">
+                                                    <i data-feather="message-square" style="width: 12px; height: 12px; flex-shrink: 0; margin-right: 4px; margin-top: 1px;"></i> Note: {{ item.notes }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        <span style="font-size: 13px; font-weight: 900; color: var(--text-muted);">₱{{ item.get_total|floatformat:2 }}</span>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); font-style: italic;">No specific load breakdown mapped.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            {% endfor %}
+
+        {% endif %}
+        
     </div>
 
 </div>

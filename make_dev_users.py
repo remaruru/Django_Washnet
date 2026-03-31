@@ -46,7 +46,7 @@ except Exception as e:
 # employee
 try:
     if not User.objects.filter(username='employee').exists():
-        emp = User.objects.create_user('employee', 'employee@laundry.com', 'gelo1234')
+        emp = User.objects.create_user('employee', 'employee@laundry.com', 'employee')
         emp.role = 'EMPLOYEE'
         emp.is_staff = True # Usually employees need staff access
         emp.save()
@@ -59,7 +59,7 @@ except Exception as e:
 # rider
 try:
     if not User.objects.filter(username='rider').exists():
-        rid = User.objects.create_user('rider', 'rider@laundry.com', 'gelo1234')
+        rid = User.objects.create_user('rider', 'rider@laundry.com', 'rider')
         rid.role = 'RIDER'
         rid.is_staff = True # Riders may need somewhat restricted staff access depending on your system, but leaving this optional
         rid.save()

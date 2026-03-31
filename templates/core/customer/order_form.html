@@ -221,6 +221,13 @@
                         </label>
                     </div>
                 </div>
+                
+                <div style="grid-column: 1 / -1; margin-top: 0;">
+                    <label class="form-label" style="font-weight: 800; display: flex; align-items: center; gap: var(--space-2);">
+                        <i data-feather="edit-2" style="width: 14px; height: 14px; color: var(--text-muted);"></i> Instruction Notes <span style="font-size: var(--text-xs); font-weight: 500; color: var(--text-muted);">(Optional)</span>
+                    </label>
+                    <textarea class="clay-input load-notes" style="width: 100%; resize: vertical; font-weight: 600; font-size: 13px;" rows="2" placeholder="e.g. Yellow bag, do not mix, delicate items, separate wash..."></textarea>
+                </div>
             </div>
         `;
 
@@ -275,7 +282,8 @@
                 fabricon: fabriconQty > 0,
                 fabricon_qty: fabriconQty,
                 detergent: detergentQty > 0,
-                detergent_qty: detergentQty
+                detergent_qty: detergentQty,
+                notes: block.querySelector('.load-notes') ? block.querySelector('.load-notes').value.trim() : ""
             });
         });
 

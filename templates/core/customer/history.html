@@ -49,7 +49,7 @@
                         </td>
                         <td style="font-weight: 900; font-family: 'Nunito', sans-serif;">₱{{ order.total_amount }}</td>
                         <td style="text-align: center;">
-                            <a href="{% url 'order_receipt' order.id %}" target="_blank" class="clay-btn clay-btn-secondary" style="padding: 4px 12px; font-size: var(--text-xs);">
+                            <a href="{% url 'order_receipt' order.receipt_token %}" target="_blank" class="clay-btn clay-btn-secondary" style="padding: 4px 12px; font-size: var(--text-xs);">
                                 <i data-feather="file-text" style="width: 14px; height: 14px;"></i> View
                             </a>
                         </td>

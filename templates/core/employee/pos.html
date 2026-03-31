@@ -484,7 +484,15 @@
                 `;
             });
             
-            html += `</div></div>`;
+            html += `</div>
+                     <div class="p-3 border-t border-border bg-background">
+                         <div class="flex items-center gap-2 mb-2 px-1">
+                             <i data-feather="edit-2" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
+                             <span class="text-xs font-bold text-main">Instruction Notes (Optional)</span>
+                         </div>
+                         <textarea id="load_${i}_notes" class="clay-input w-full text-sm resize-none font-semibold" rows="2" placeholder="e.g. Yellow bag, do not mix, delicate items..."></textarea>
+                     </div>
+                </div>`;
         }
         
         loadsContainer.innerHTML = html;
@@ -506,6 +514,7 @@
         for (let i = 1; i <= numLoads; i++) {
             globalLoadGroupCounter++;
             const currentLoadId = globalLoadGroupCounter;
+            const notesText = document.getElementById(`load_${i}_notes`) ? document.getElementById(`load_${i}_notes`).value.trim() : "";
             
             // Push base service explicitly bound to this load index
             cart.push({
@@ -514,6 +523,7 @@
                 load_index: currentLoadId,
                 id: currentService.id,
                 name: currentService.name,
+                notes: notesText,
                 desc: `Load ${i}/${numLoads} · Max 7kg block`,
                 price: currentService.price,
                 qty: 1, 

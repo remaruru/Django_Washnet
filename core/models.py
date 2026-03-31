@@ -1,6 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
+import string
+from django.utils.crypto import get_random_string
+
+def generate_receipt_token():
+    return get_random_string(12, allowed_chars=string.ascii_letters + string.digits)
 
 class User(AbstractUser):
     class RoleChoices(models.TextChoices):
@@ -23,13 +28,6 @@ class User(AbstractUser):
     class Meta:
         verbose_name = "User"
         verbose_name_plural = "Users"
-
-class CustomerProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer_profile')
-    points = models.IntegerField(default=0)
-    
-    def __str__(self):
-        return f"Customer Profile - {self.user.username}"
 
 class EmployeeProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee_profile')
@@ -95,6 +93,8 @@ class Order(models.Model):
     payment_status = models.CharField(max_length=20, choices=PaymentStatusChoices.choices, default=PaymentStatusChoices.UNPAID)
     payment_reference = models.CharField(max_length=100, blank=True, null=True, help_text="e.g. GCash Ref No.")
     
+    receipt_token = models.CharField(max_length=12, default=generate_receipt_token, unique=True, editable=False)
+    
     # Shopee-like delivery metadata
     scheduled_pickup = models.DateTimeField(null=True, blank=True)
     
@@ -121,6 +121,7 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     item_type = models.CharField(max_length=10, choices=ItemTypeChoices.choices, default=ItemTypeChoices.SERVICE)
     load_index = models.IntegerField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
     
     service = models.ForeignKey(Service, on_delete=models.SET_NULL, null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)

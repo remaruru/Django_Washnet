@@ -39,5 +39,5 @@ urlpatterns = [
     path('pos/', views.employee_pos, name='employee_pos'),
     
     # Shared
-    path('receipt/<int:order_id>/', views.order_receipt, name='order_receipt'),
+    path('receipt/<str:receipt_token>/', views.order_receipt, name='order_receipt'),
 ]

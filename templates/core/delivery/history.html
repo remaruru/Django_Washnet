@@ -75,7 +75,7 @@
                     <button type="button" onclick="openOrderModal('modal_history_{{ job.id }}')" class="clay-btn clay-btn-ghost" style="width: 100%; border: 1px solid var(--border); padding: 10px; font-weight: 800; font-size: var(--text-xs); display: flex; justify-content: center; background: #ffffff;">
                         View Details
                     </button>
-                    <a href="{% url 'order_receipt' job.id %}" target="_blank" class="clay-btn clay-btn-primary" style="padding: 10px; display: flex; align-items: center; justify-content: center;">
+                    <a href="{% url 'order_receipt' job.receipt_token %}" target="_blank" class="clay-btn clay-btn-primary" style="padding: 10px; display: flex; align-items: center; justify-content: center;">
                         <i data-feather="printer" style="width: 16px; height: 16px;"></i>
                     </a>
                 </div>
@@ -163,6 +163,11 @@
                                                 <span style="font-weight: 800; color: var(--text-main);">{{ item.service.name }}</span>
                                                 <span style="font-weight: 800; color: var(--text-muted);">&times; {{ item.quantity|floatformat:"0" }}</span>
                                             </div>
+                                            {% if item.notes %}
+                                            <div style="font-size: 13px; font-weight: 700; color: #a16207; margin-top: -2px; margin-bottom: 4px; padding: 4px 8px; background: #fefce8; border-radius: 4px; border-left: 3px solid #eab308; display: flex; align-items: flex-start;">
+                                                <i data-feather="message-square" style="width: 12px; height: 12px; flex-shrink: 0; margin-right: 4px; margin-top: 2px;"></i> {{ item.notes }}
+                                            </div>
+                                            {% endif %}
                                             {% endif %}
                                         {% endfor %}
                                     </div>

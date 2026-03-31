@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout # type: ignore
 from django.contrib import messages # type: ignore
 from django.utils import timezone # type: ignore
 from django.db.models import Sum, Count, Q, F # type: ignore
+from django.db.models.functions import TruncDay, TruncMonth # type: ignore
 from django.urls import reverse # type: ignore
 import json
 import qrcode # type: ignore
@@ -167,9 +168,12 @@ def admin_analytics(request):
         
     filter_date_str = request.GET.get('date')
     filter_month_str = request.GET.get('month')
+    quick_filter = request.GET.get('quick_filter')
     
     orders = Order.objects.all()
     selected_filter = "All Time"
+    
+    now = timezone.now()
     
     if filter_date_str:
         try:
@@ -185,34 +189,94 @@ def admin_analytics(request):
             selected_filter = f"Month: {dt.strftime('%B %Y')}"
         except:
             pass
+    elif quick_filter:
+        import datetime as dt_mod
+        if quick_filter == 'today':
+            orders = orders.filter(created_at__date=now.date())
+            selected_filter = "Today"
+        elif quick_filter == 'this_week':
+            start_of_week = now.date() - dt_mod.timedelta(days=now.weekday())
+            orders = orders.filter(created_at__date__gte=start_of_week)
+            selected_filter = "This Week"
+        elif quick_filter == 'this_month':
+            orders = orders.filter(created_at__year=now.year, created_at__month=now.month)
+            selected_filter = "This Month"
             
+    # Top KPI Metrics
     total_orders = orders.count()
-    total_income = orders.aggregate(total=Sum('total_amount'))['total'] or 0
-    paid_orders_count = orders.filter(payment_status=Order.PaymentStatusChoices.PAID).count()
+    completed_orders = orders.filter(status=Order.StatusChoices.COMPLETED).count()
+    pending_orders = orders.exclude(status__in=[Order.StatusChoices.COMPLETED, Order.StatusChoices.CANCELLED]).count()
+    
+    paid_orders = orders.filter(payment_status=Order.PaymentStatusChoices.PAID)
+    paid_orders_count = paid_orders.count()
     unpaid_orders_count = orders.filter(payment_status=Order.PaymentStatusChoices.UNPAID).count()
     
-    breakdown_cash = orders.filter(payment_method=Order.PaymentMethodChoices.CASH).count()
-    breakdown_gcash = orders.filter(payment_method=Order.PaymentMethodChoices.GCASH).count()
-    breakdown_paypal = orders.filter(payment_method=Order.PaymentMethodChoices.PAYPAL).count()
+    total_revenue = paid_orders.aggregate(total=Sum('total_amount'))['total'] or 0.0
+    average_order_value = (total_revenue / paid_orders_count) if paid_orders_count > 0 else 0.0
+    
+    # Advanced Breakdown
+    cash_orders = paid_orders.filter(payment_method=Order.PaymentMethodChoices.CASH)
+    breakdown_cash = cash_orders.count()
+    cash_total = cash_orders.aggregate(total=Sum('total_amount'))['total'] or 0.0
+    
+    gcash_orders = paid_orders.filter(payment_method=Order.PaymentMethodChoices.GCASH)
+    breakdown_gcash = gcash_orders.count()
+    gcash_total = gcash_orders.aggregate(total=Sum('total_amount'))['total'] or 0.0
+    
+    breakdown_paypal = paid_orders.filter(payment_method=Order.PaymentMethodChoices.PAYPAL).count()
     
     breakdown_walkin = orders.filter(order_type=Order.OrderTypeChoices.WALK_IN).count()
     breakdown_delivery = orders.filter(order_type=Order.OrderTypeChoices.DELIVERY).count()
     breakdown_appt = orders.filter(order_type=Order.OrderTypeChoices.APPOINTMENT).count()
     
+    # Aggregations for Chart.js
+    daily_stats = list(orders.annotate(day=TruncDay('created_at')).values('day').annotate(count=Count('id'), revenue=Sum('total_amount')).order_by('day'))
+    monthly_stats = list(orders.annotate(month=TruncMonth('created_at')).values('month').annotate(count=Count('id'), revenue=Sum('total_amount')).order_by('month'))
+    
+    orders_by_day = [{'x': d['day'].strftime('%Y-%m-%d'), 'y': d['count']} for d in daily_stats if d['day']]
+    revenue_by_day = [{'x': d['day'].strftime('%Y-%m-%d'), 'y': float(d['revenue'] or 0)} for d in daily_stats if d['day']]
+    
+    orders_by_month = [{'x': d['month'].strftime('%Y-%m'), 'y': d['count']} for d in monthly_stats if d['month']]
+    revenue_by_month = [{'x': d['month'].strftime('%Y-%m'), 'y': float(d['revenue'] or 0)} for d in monthly_stats if d['month']]
+    
+    # Also collect status breakdown
+    status_counts = list(orders.values('status').annotate(count=Count('id')).order_by('-count'))
+    status_labels = dict(Order.StatusChoices.choices)
+    status_chart_data = [{'label': status_labels.get(item['status'], item['status']), 'count': item['count']} for item in status_counts]
+
     context = {
         'selected_filter': selected_filter,
         'filter_date_str': filter_date_str or '',
         'filter_month_str': filter_month_str or '',
+        'quick_filter': quick_filter or '',
+        
+        # KPIs
         'total_orders': total_orders,
-        'total_income': total_income,
+        'completed_orders': completed_orders,
+        'pending_orders': pending_orders,
         'paid_orders_count': paid_orders_count,
         'unpaid_orders_count': unpaid_orders_count,
+        'total_revenue': total_revenue,
+        'average_order_value': average_order_value,
+        
+        # Payment breakdown
         'breakdown_cash': breakdown_cash,
+        'cash_total': cash_total,
         'breakdown_gcash': breakdown_gcash,
+        'gcash_total': gcash_total,
         'breakdown_paypal': breakdown_paypal,
+        
+        # Order sources
         'breakdown_walkin': breakdown_walkin,
         'breakdown_delivery': breakdown_delivery,
         'breakdown_appt': breakdown_appt,
+        
+        # Chart data (JSON strings safely dumped for the template)
+        'orders_by_day_json': json.dumps(orders_by_day),
+        'revenue_by_day_json': json.dumps(revenue_by_day),
+        'orders_by_month_json': json.dumps(orders_by_month),
+        'revenue_by_month_json': json.dumps(revenue_by_month),
+        'status_chart_json': json.dumps(status_chart_data),
     }
     return render(request, 'core/admin/analytics.html', context)
 
@@ -223,9 +287,19 @@ def admin_queue(request):
         
     filter_date_str = request.GET.get('date')
     filter_month_str = request.GET.get('month')
+    quick_filter = request.GET.get('quick_filter')
     
-    orders = Order.objects.exclude(status__in=[Order.StatusChoices.COMPLETED, Order.StatusChoices.CANCELLED])
+    # Machine Queue Operation States
+    operational_statuses = [
+        Order.StatusChoices.AT_SHOP,
+        Order.StatusChoices.PROCESSING,
+        Order.StatusChoices.READY_FOR_DELIVERY
+    ]
+    
+    orders = Order.objects.filter(status__in=operational_statuses)
+    
     selected_filter = "All Time"
+    now = timezone.now()
     
     if filter_date_str:
         try:
@@ -241,15 +315,45 @@ def admin_queue(request):
             selected_filter = f"Month: {dt.strftime('%B %Y')}"
         except:
             pass
+    elif quick_filter:
+        import datetime as dt_mod
+        if quick_filter == 'today':
+            orders = orders.filter(created_at__date=now.date())
+            selected_filter = "Today"
+        elif quick_filter == 'this_week':
+            start_of_week = now.date() - dt_mod.timedelta(days=now.weekday())
+            orders = orders.filter(created_at__date__gte=start_of_week)
+            selected_filter = "This Week"
+        elif quick_filter == 'this_month':
+            orders = orders.filter(created_at__year=now.year, created_at__month=now.month)
+            selected_filter = "This Month"
             
-    active_orders = orders.order_by('-created_at')[:100]
+    # Explicitly pull in relationships to dodge N+1 queries natively in the template iteration
+    active_orders = orders.select_related(
+        'customer', 'employee', 'rider'
+    ).prefetch_related(
+        'items', 'items__service', 'items__product'
+    ).order_by('created_at')
+    
+    active_orders_list = list(active_orders)
+    
+    # Calculate live queue statistics based on the extracted scope 
+    total_orders_in_queue = len(active_orders_list)
+    at_shop_count = len([o for o in active_orders_list if o.status == Order.StatusChoices.AT_SHOP])
+    processing_count = len([o for o in active_orders_list if o.status == Order.StatusChoices.PROCESSING])
+    ready_count = len([o for o in active_orders_list if o.status == Order.StatusChoices.READY_FOR_DELIVERY])
     
     context = {
         'selected_filter': selected_filter,
         'filter_date_str': filter_date_str or '',
         'filter_month_str': filter_month_str or '',
-        'active_orders': active_orders,
-        'active_orders_count': orders.count(),
+        'quick_filter': quick_filter or '',
+        
+        'active_orders': active_orders_list,
+        'active_orders_count': total_orders_in_queue,
+        'at_shop_count': at_shop_count,
+        'processing_count': processing_count,
+        'ready_count': ready_count,
     }
     return render(request, 'core/admin/queue.html', context)
 
@@ -287,7 +391,7 @@ def add_user(request):
         return redirect('dashboard')
         
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST, request_user=request.user)
         if form.is_valid():
             new_user = form.save()
             messages.success(request, f'Account for {new_user.username} created successfully!')
@@ -295,7 +399,7 @@ def add_user(request):
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
-        form = CustomUserCreationForm()
+        form = CustomUserCreationForm(request_user=request.user)
         
     return render(request, 'core/admin/add_user.html', {'form': form})
 
@@ -565,6 +669,7 @@ def employee_pos(request):
         for item in cart:
             item_type = item.get('item_type', 'SERVICE' if item['type'] == 'Service' else 'PRODUCT')
             load_index = item.get('load_index', None)
+            notes_text = item.get('notes', '')
             
             if item['type'] == 'Service':
                 service = Service.objects.get(id=item['id'])
@@ -574,7 +679,8 @@ def employee_pos(request):
                     quantity=item['qty'], 
                     price=item['price'],
                     item_type=item_type,
-                    load_index=load_index
+                    load_index=load_index,
+                    notes=notes_text
                 )
             else:
                 product = Product.objects.get(id=item['id'])
@@ -588,7 +694,7 @@ def employee_pos(request):
                 )
                 
         # Generate QR code
-        qr_url = request.build_absolute_uri(f'/receipt/{order.id}/')
+        qr_url = request.build_absolute_uri(f'/receipt/{order.receipt_token}/')
         qr = qrcode.make(qr_url)
         buffer = BytesIO()
         qr.save(buffer, format='PNG')
@@ -631,12 +737,10 @@ def customer_dashboard(request):
     if request.user.role != User.RoleChoices.CUSTOMER:
          return redirect('dashboard')
          
-    profile = request.user.customer_profile
     active_orders = request.user.customer_orders.exclude(status__in=[Order.StatusChoices.COMPLETED, Order.StatusChoices.CANCELLED]).order_by('-created_at')
     appointments = request.user.appointments.filter(status__in=[Appointment.StatusChoices.PENDING, Appointment.StatusChoices.CONFIRMED]).order_by('appointment_date')
     
     context = {
-        'profile': profile,
         'active_orders': active_orders,
         'appointments': appointments,
     }
@@ -707,6 +811,8 @@ def customer_create_order(request):
                 fabricon_obj = Product.objects.filter(name__icontains="Fabric").first() if fabricon_qty > 0 else None
                 detergent_obj = Product.objects.filter(name__icontains="Detergent").first() if detergent_qty > 0 else None
                 
+                load_notes = load.get('notes', '')
+                
                 global_load_index = global_load_index + 1 # type: ignore
                 current_load_id = global_load_index
                 
@@ -719,7 +825,8 @@ def customer_create_order(request):
                     'load_index': current_load_id,
                     'obj': service,
                     'qty': 1,
-                    'price': getattr(service, 'price', 0.0)
+                    'price': getattr(service, 'price', 0.0),
+                    'notes': load_notes
                 })
                 
                 # 2. Add Add-ons for this specific load
@@ -774,7 +881,8 @@ def customer_create_order(request):
                         quantity=item['qty'], 
                         price=item['price'],
                         item_type=item.get('item_type', 'SERVICE'),
-                        load_index=item.get('load_index')
+                        load_index=item.get('load_index'),
+                        notes=item.get('notes', '')
                     )
                 else:
                     OrderItem.objects.create(
@@ -787,7 +895,7 @@ def customer_create_order(request):
                     )
                     
             # Generate QR code
-            qr_url = request.build_absolute_uri(f'/receipt/{new_order.id}/')
+            qr_url = request.build_absolute_uri(f'/receipt/{new_order.receipt_token}/')
             qr_img = qrcode.make(qr_url)
             buffer = BytesIO()
             qr_img.save(buffer, format='PNG')
@@ -872,8 +980,8 @@ def delivery_history(request):
 
 # --- RECEIPT ---
 @login_required
-def order_receipt(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
+def order_receipt(request, receipt_token):
+    order = get_object_or_404(Order, receipt_token=receipt_token)
     # Both customer and employee can view it
     if request.user.role == User.RoleChoices.CUSTOMER and order.customer != request.user:
         return redirect('dashboard')
