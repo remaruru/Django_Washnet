@@ -50,39 +50,42 @@
             </div>
         </div>
 
-        <div style="margin-bottom: var(--space-6); display: flex; align-items: center; gap: var(--space-3);">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; box-shadow: var(--shadow-clay-card);">1</div>
-            <h3 style="font-size: var(--text-lg); font-weight: 900; color: var(--text-main); margin: 0;">Laundry Loads Configurator</h3>
+        <!-- Logistics First -->
+        <div style="margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-3);">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; box-shadow: var(--shadow-clay-card);">1</div>
+            <h3 style="font-size: var(--text-base); font-weight: 900; color: var(--text-main); margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Logistics & Routing</h3>
         </div>
 
-        <div id="loadsContainer" style="display: flex; flex-direction: column; gap: var(--space-6); margin-bottom: var(--space-6);">
+        <div class="clay-card" style="margin-bottom: var(--space-6); padding: var(--space-4); border: 1px solid var(--border); box-shadow: none;">
+            <div class="form-group" style="margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4); align-items: end;">
+                <div>
+                    <label class="form-label" style="font-weight: 800; font-size: 13px;">How will we get your laundry?</label>
+                    <select id="deliveryMethod" name="delivery_method" class="clay-input" style="font-weight: 700; padding: 10px;" onchange="togglePickupTime()">
+                        <option value="DROP_OFF">I will drop it off at the shop</option>
+                        <option value="PICKUP">Request Rider Pickup (We'll come to your address)</option>
+                    </select>
+                </div>
+                <div id="pickupTimeContainer" style="display: none;">
+                    <label class="form-label" style="font-weight: 800; font-size: 13px; color: var(--primary);">Select Pickup Time</label>
+                    <input type="datetime-local" id="pickupDatetime" name="pickup_datetime" class="clay-input" style="padding: 10px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Loads Configurator -->
+        <div style="margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-3);">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; box-shadow: var(--shadow-clay-card);">2</div>
+            <h3 style="font-size: var(--text-base); font-weight: 900; color: var(--text-main); margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Laundry Loads</h3>
+        </div>
+
+        <div id="loadsContainer" style="display: flex; flex-direction: column; gap: var(--space-4); margin-bottom: var(--space-4);">
             <!-- Loads injected here via JS -->
         </div>
 
-        <button type="button" class="clay-btn clay-btn-secondary" style="width: 100%; border: 2px dashed var(--border); background: transparent; box-shadow: none; color: var(--primary); padding: var(--space-4); margin-bottom: var(--space-8);" onclick="addLoad()">
-            <i data-feather="plus"></i> 
-            <span style="margin-left: var(--space-2);">Add Another Load</span>
+        <button type="button" class="clay-btn clay-btn-ghost" style="width: 100%; border: 2px dashed rgba(139, 92, 246, 0.4); background: rgba(139, 92, 246, 0.05); color: var(--primary); padding: var(--space-3); margin-bottom: var(--space-8); font-weight: 800;" onclick="addLoad()">
+            <i data-feather="plus" style="width: 16px; height: 16px;"></i> 
+            <span style="margin-left: 8px;">Add Next Load</span>
         </button>
-
-
-        <div style="margin-bottom: var(--space-6); display: flex; align-items: center; gap: var(--space-3);">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; box-shadow: var(--shadow-clay-card);">2</div>
-            <h3 style="font-size: var(--text-lg); font-weight: 900; color: var(--text-main); margin: 0;">Logistics & Delivery</h3>
-        </div>
-
-        <div class="clay-card" style="margin-bottom: var(--space-8);">
-            <div class="form-group" style="margin: 0;">
-                <label class="form-label" style="font-weight: 800;">How will we get your laundry?</label>
-                <select id="deliveryMethod" name="delivery_method" class="clay-input" style="font-weight: 700;" onchange="togglePickupTime()">
-                    <option value="DROP_OFF">I will drop it off at the shop</option>
-                    <option value="PICKUP">Request Rider Pickup (We'll come to your address)</option>
-                </select>
-            </div>
-            <div id="pickupTimeContainer" style="display: none; margin-top: var(--space-4);">
-                <label class="form-label" style="font-weight: 800; color: var(--primary);">Select Pickup Time</label>
-                <input type="datetime-local" id="pickupDatetime" name="pickup_datetime" class="clay-input">
-            </div>
-        </div>
 
         <!-- Floating Checkout Footer -->
         <div style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid var(--border); padding: var(--space-4) var(--space-8); box-shadow: 0 -10px 40px rgba(0,0,0,0.05); z-index: 50; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s; margin-left: 256px;">
@@ -162,6 +165,9 @@
         block.className = 'load-block clay-card';
         block.style.position = 'relative';
         block.style.overflow = 'hidden';
+        block.style.padding = '16px';
+        block.style.boxShadow = 'none';
+        block.style.border = '1px solid var(--border)';
         
         let optionsHtml = '<option value="">-- Select a Service --</option>';
         availableServices.forEach(s => {
@@ -169,67 +175,60 @@
         });
 
         block.innerHTML = `
-            <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--secondary); box-shadow: var(--shadow-clay-card);"></div>
+            <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--secondary);"></div>
             
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border);">
-                <h3 style="font-size: var(--text-lg); font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: var(--space-2);">
-                    <i data-feather="package" style="color: var(--text-muted);"></i> Load #${loadCounter}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid rgba(0,0,0,0.05);">
+                <h3 style="font-size: 14px; font-weight: 900; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 6px; text-transform: uppercase;">
+                    <i data-feather="package" style="width: 14px; color: var(--text-muted);"></i> Load #${loadCounter}
                 </h3>
-                ${loadCounter > 1 ? `<button type="button" onclick="this.closest('.load-block').remove(); calculateTotal();" style="color: var(--error); background: transparent; border: none; cursor: pointer; display: flex; align-items: center; font-weight: 800; font-size: var(--text-sm);"><i data-feather="trash-2" style="width: 16px; height: 16px; margin-right: 4px;"></i> Remove</button>` : ''}
+                ${loadCounter > 1 ? `<button type="button" onclick="this.closest('.load-block').remove(); calculateTotal();" style="color: var(--error); background: transparent; border: none; cursor: pointer; display: flex; align-items: center; font-weight: 800; font-size: 12px;"><i data-feather="x" style="width: 14px; height: 14px; margin-right: 2px;"></i> Remove</button>` : ''}
             </div>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-8); align-items: start;">
-                <div style="display: flex; flex-direction: column; gap: var(--space-4);">
-                    <div class="form-group" style="margin: 0;">
-                        <label class="form-label" style="font-weight: 800;">Service Type</label>
-                        <select class="clay-input service-select" style="font-weight: 600;" required onchange="calculateTotal()">
-                            ${optionsHtml}
-                        </select>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: start;">
+                <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: var(--space-3);">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px;">
+                        <div>
+                            <label class="form-label" style="font-weight: 800; font-size: 12px; margin-bottom: 4px;">Service</label>
+                            <select class="clay-input service-select" style="font-weight: 700; font-size: 13px; padding: 8px;" required onchange="calculateTotal()">
+                                ${optionsHtml}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-weight: 800; font-size: 12px; margin-bottom: 4px;">Weight (kg)</label>
+                            <input type="number" class="clay-input weight-input" style="font-weight: 800; font-size: 13px; padding: 8px;" required min="0.1" step="0.1" max="7" placeholder="Max 7kg" oninput="calculateTotal()">
+                        </div>
                     </div>
                     
-                    <div style="display: flex; flex-direction: column; gap: 4px; margin: 0;">
-                        <label class="form-label" style="font-weight: 800; margin: 0;">Est. Weight (kg)</label>
-                        <input type="number" class="clay-input weight-input" style="font-weight: 800;" required min="0.1" step="0.1" max="7" placeholder="max 7kg" oninput="calculateTotal()">
-                        <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin-top: 4px;">Maximum of 7kg per load. Add another load if your laundry exceeds 7kg.</span>
+                    <div class="weight-error-msg" style="display: none; color: var(--error); font-size: 11px; font-weight: 800; margin-top: -4px; background: rgba(239, 68, 68, 0.1); padding: 6px 8px; border-radius: 4px;">
+                        Exceeds 7kg limit. Please add another load.
                     </div>
-                    
-                    <div class="weight-error-msg" style="display: none; color: var(--error); font-size: var(--text-xs); font-weight: 800; margin-top: -8px; background: rgba(239, 68, 68, 0.1); padding: 8px 12px; border-radius: 6px; border-left: 3px solid var(--error);">
-                        Each load can only handle up to 7kg. Please add another load.
+
+                    <div>
+                        <label class="form-label" style="font-weight: 800; font-size: 12px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                            <i data-feather="edit-2" style="width: 12px; color: var(--text-muted);"></i> Notes <span style="font-size: 10px; font-weight: 500; color: var(--text-muted);">(Optional)</span>
+                        </label>
+                        <textarea class="clay-input load-notes" style="width: 100%; resize: none; font-weight: 600; font-size: 12px; padding: 8px;" rows="1" placeholder="e.g. delicate items, do not mix..."></textarea>
                     </div>
                 </div>
                 
-                <div class="clay-inset">
-                    <label class="form-label" style="font-weight: 800; margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-2);">
-                        <i data-feather="plus-circle" style="width: 16px; height: 16px; color: var(--primary);"></i> Add-ons <span style="font-size: var(--text-xs); font-weight: 500; color: var(--text-muted); margin-left: auto;">(Optional)</span>
+                <div style="width: 250px; flex-shrink: 0; background: var(--surface); padding: 12px; border: 1px solid var(--border); border-radius: 8px;">
+                    <label class="form-label" style="font-weight: 800; font-size: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                        <i data-feather="plus-circle" style="width: 12px; color: var(--primary);"></i> Add-ons <span style="font-size: 10px; font-weight: 500; color: var(--text-muted);">(Optional)</span>
                     </label>
-                    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
-                        <label style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-clay-card); transition: all 0.3s;">
-                            <div style="display: flex; align-items: center; gap: var(--space-3);">
-                                <span style="font-weight: 800; font-size: var(--text-sm); color: var(--text-main); line-height: 1;">Fabricon / Downy</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: var(--space-2);">
-                                <span class="clay-badge clay-badge-gray" style="margin-right: var(--space-2);">₱15/ea</span>
-                                <input type="number" class="fabricon-qty clay-input" style="width: 60px; padding: 4px; text-align: center; font-weight: 800;" min="0" value="0" oninput="calculateTotal()">
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+                            <span style="font-weight: 800; color: var(--text-main);">Fabricon <span style="color:var(--text-muted); font-size:10px;">(₱15)</span></span>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <input type="number" class="fabricon-qty clay-input" style="width: 50px; padding: 4px; text-align: center; font-weight: 800; font-size: 12px;" min="0" value="0" oninput="calculateTotal()">
                             </div>
                         </label>
-                        
-                        <label style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-clay-card); transition: all 0.3s;">
-                            <div style="display: flex; align-items: center; gap: var(--space-3);">
-                                <span style="font-weight: 800; font-size: var(--text-sm); color: var(--text-main); line-height: 1;">Premium Detergent</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: var(--space-2);">
-                                <span class="clay-badge clay-badge-gray" style="margin-right: var(--space-2);">₱15/ea</span>
-                                <input type="number" class="detergent-qty clay-input" style="width: 60px; padding: 4px; text-align: center; font-weight: 800;" min="0" value="0" oninput="calculateTotal()">
+                        <label style="display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+                            <span style="font-weight: 800; color: var(--text-main);">Premium Det. <span style="color:var(--text-muted); font-size:10px;">(₱15)</span></span>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <input type="number" class="detergent-qty clay-input" style="width: 50px; padding: 4px; text-align: center; font-weight: 800; font-size: 12px;" min="0" value="0" oninput="calculateTotal()">
                             </div>
                         </label>
                     </div>
-                </div>
-                
-                <div style="grid-column: 1 / -1; margin-top: 0;">
-                    <label class="form-label" style="font-weight: 800; display: flex; align-items: center; gap: var(--space-2);">
-                        <i data-feather="edit-2" style="width: 14px; height: 14px; color: var(--text-muted);"></i> Instruction Notes <span style="font-size: var(--text-xs); font-weight: 500; color: var(--text-muted);">(Optional)</span>
-                    </label>
-                    <textarea class="clay-input load-notes" style="width: 100%; resize: vertical; font-weight: 600; font-size: 13px;" rows="2" placeholder="e.g. Yellow bag, do not mix, delicate items, separate wash..."></textarea>
                 </div>
             </div>
         `;
