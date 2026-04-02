@@ -51,17 +51,29 @@
         {% if available_jobs %}
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4);">
             {% for job in available_jobs %}
-            <div class="clay-card" style="border: 2px solid rgba(139, 92, 246, 0.3); display: flex; flex-direction: column; height: 100%;">
+            <div class="clay-card" style="border-top: 4px solid var(--primary); display: flex; flex-direction: column; height: 100%; padding: var(--space-5);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3);">
                     <span class="clay-badge clay-badge-indigo" style="text-transform: uppercase; font-weight: 900; letter-spacing: 0.05em;">New Request #{{ job.id }}</span>
                     <span style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted);">{{ job.scheduled_pickup|timeuntil }} left</span>
                 </div>
                 
-                <h3 style="font-size: var(--text-base); font-weight: 900; color: var(--text-main); margin-bottom: 4px;">{{ job.customer.username }}</h3>
-                <p style="font-size: var(--text-sm); font-weight: 700; color: var(--text-muted); display: flex; align-items: flex-start; gap: 6px; margin-bottom: var(--space-2);">
-                    <i data-feather="map-pin" style="width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px;"></i> 
-                    {{ job.customer.address|default:"No address stored" }}
-                </p>
+                <h3 style="font-size: var(--text-base); font-weight: 900; color: var(--text-main); margin-bottom: 8px;">{{ job.customer.username }}</h3>
+                <div class="clay-inset" style="padding: var(--space-3); margin-bottom: var(--space-4); font-size: var(--text-sm); border: 1px solid var(--border);">
+                    <p style="color: var(--text-muted); font-weight: 700; display: flex; align-items: flex-start; gap: 8px; margin: 0 0 6px 0;">
+                        <i data-feather="map-pin" style="flex-shrink: 0; margin-top: 2px; width: 14px; height: 14px;"></i> 
+                        <span style="line-height: 1.2;">{{ job.delivery_address|default:"No address stored" }}</span>
+                    </p>
+                    <p style="color: var(--text-muted); font-weight: 800; display: flex; align-items: center; gap: 8px; margin: 0 0 6px 0;">
+                        <i data-feather="phone" style="flex-shrink: 0; width: 14px; height: 14px;"></i> 
+                        <span>{{ job.delivery_contact|default:"N/A" }}</span>
+                    </p>
+                    {% if job.delivery_notes %}
+                    <p style="color: var(--text-muted); font-weight: 600; display: flex; align-items: flex-start; gap: 8px; margin: 0;">
+                        <i data-feather="file-text" style="flex-shrink: 0; margin-top: 2px; width: 14px; height: 14px;"></i> 
+                        <span style="line-height: 1.2; font-style: italic;">{{ job.delivery_notes }}</span>
+                    </p>
+                    {% endif %}
+                </div>
                 <p style="font-size: var(--text-sm); font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 6px; margin-bottom: var(--space-4); background: var(--surface); padding: 4px 8px; border-radius: var(--radius-md); border: 1px solid var(--border); box-shadow: var(--shadow-clay-card); width: fit-content;">
                     <i data-feather="calendar" style="color: var(--primary); width: 14px; height: 14px;"></i>
                     {{ job.scheduled_pickup|date:"M j, P" }}
@@ -98,35 +110,83 @@
         {% if accepted_jobs %}
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4);">
             {% for job in accepted_jobs %}
-            <div class="clay-card" style="border: 2px solid rgba(249, 115, 22, 0.3); display: flex; flex-direction: column; height: 100%; position: relative; overflow: hidden; padding-top: var(--space-5);">
-                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: #f97316;"></div>
-                
+            <div class="clay-card" style="border-top: 4px solid #f97316; display: flex; flex-direction: column; height: 100%; padding: var(--space-5);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3);">
-                    <span style="font-size: var(--text-xs); font-weight: 900; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(249, 115, 22, 0.1); padding: 2px 8px; border-radius: 4px;">Pickup #{{ job.id }}</span>
+                    <span style="font-size: var(--text-xs); font-weight: 900; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(249, 115, 22, 0.1); padding: 4px 8px; border-radius: 6px;">Pickup #{{ job.id }}</span>
                 </div>
                 
-                <h3 style="font-size: var(--text-base); font-weight: 900; color: var(--text-main); margin-bottom: 4px;">{{ job.customer.username }}</h3>
-                <p style="font-size: var(--text-sm); font-weight: 800; color: #c2410c; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <h3 style="font-size: var(--text-base); font-weight: 900; color: var(--text-main); margin-bottom: 8px;">{{ job.customer.username }}</h3>
+                <p style="font-size: var(--text-sm); font-weight: 800; color: #c2410c; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; background: rgba(249,115,22,0.05); padding: 6px 12px; border-radius: 6px; width: fit-content; border: 1px solid rgba(249,115,22,0.2);">
                     <i data-feather="calendar" style="width: 14px; height: 14px;"></i> {{ job.scheduled_pickup|date:"M j, P" }}
                 </p>
-                <div class="clay-inset" style="padding: var(--space-3); margin: var(--space-3) 0; display: flex; flex-direction: column; gap: var(--space-2); border: 1px solid var(--border);">
+                <div class="clay-inset" style="padding: var(--space-3); margin-bottom: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); border: 1px solid var(--border);">
                     <p style="font-size: var(--text-sm); font-weight: 700; color: var(--text-muted); display: flex; align-items: flex-start; gap: 8px; margin: 0;">
                         <i data-feather="map-pin" style="flex-shrink: 0; margin-top: 2px; width: 14px; height: 14px;"></i> 
-                        <span>{{ job.customer.address|default:"No address stored" }}</span>
+                        <span>{{ job.delivery_address|default:"No address stored" }}</span>
                     </p>
                     <p style="font-size: var(--text-sm); font-weight: 800; color: var(--text-muted); display: flex; align-items: center; gap: 8px; margin: 0;">
                         <i data-feather="phone" style="flex-shrink: 0; width: 14px; height: 14px;"></i> 
-                        <span>{{ job.customer.phone_number|default:"N/A" }}</span>
+                        <span>{{ job.delivery_contact|default:"N/A" }}</span>
                     </p>
+                    {% if job.delivery_notes %}
+                    <p style="font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); display: flex; align-items: flex-start; gap: 8px; margin: 0;">
+                        <i data-feather="file-text" style="flex-shrink: 0; margin-top: 2px; width: 14px; height: 14px;"></i> 
+                        <span style="font-style: italic;">{{ job.delivery_notes }}</span>
+                    </p>
+                    {% endif %}
                 </div>
                 
-                <form method="POST" action="{% url 'update_order_status' job.id %}" style="margin-top: auto;">
-                    {% csrf_token %}
-                    <input type="hidden" name="status" value="PICKED_UP">
-                    <button type="submit" class="clay-btn" style="width: 100%; padding: var(--space-3); background: #f97316; color: white;">
-                        I have the laundry
-                    </button>
-                </form>
+                {% if job.payment_status == 'UNPAID' %}
+                    <div id="action-btn-{{ job.id }}" style="margin-top: auto;">
+                        <button type="button" onclick="document.getElementById('action-btn-{{ job.id }}').style.display='none'; document.getElementById('pickup-payment-{{ job.id }}').style.display='block';" class="clay-btn" style="width: 100%; padding: var(--space-3); background: #f97316; color: white;">
+                            I have the laundry
+                        </button>
+                    </div>
+                    <div id="pickup-payment-{{ job.id }}" style="display: none; margin-top: auto; border-top: 1px solid var(--border); padding-top: var(--space-3);">
+                        <p style="font-size: var(--text-xs); font-weight: 900; color: var(--warning); text-transform: uppercase; margin-bottom: var(--space-2); display: flex; align-items: center; gap: 4px;">
+                            <i data-feather="alert-circle" style="width: 12px; height: 12px;"></i> Collection Required
+                        </p>
+                        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                            <label style="flex: 1; cursor: pointer; text-align: center; border: 2px solid var(--border); border-radius: 8px; padding: 8px; background: transparent; transition: all 0.2s;" onclick="selectPaymentMethod('{{ job.id }}-pickup', 'CASH', this)">
+                                <div style="font-weight: 800; font-size: 13px; color: var(--text-main); display: flex; align-items: center; justify-content: center;"><i data-feather="dollar-sign" style="width: 14px; margin-right: 4px;"></i> Cash</div>
+                            </label>
+                            <label style="flex: 1; cursor: pointer; text-align: center; border: 2px solid var(--border); border-radius: 8px; padding: 8px; background: transparent; transition: all 0.2s;" onclick="selectPaymentMethod('{{ job.id }}-pickup', 'GCASH', this)">
+                                <div style="font-weight: 800; font-size: 13px; color: var(--text-main); display: flex; align-items: center; justify-content: center;"><i data-feather="smartphone" style="width: 14px; margin-right: 4px;"></i> GCash</div>
+                            </label>
+                        </div>
+                        
+                        <div id="payment-confirm-CASH-{{ job.id }}-pickup" style="display: none;">
+                            <form method="POST" action="{% url 'update_order_status' job.id %}" style="margin: 0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="PICKED_UP">
+                                <input type="hidden" name="payment_method" value="CASH">
+                                <button type="submit" class="clay-btn clay-btn-secondary" style="width: 100%; border-color: var(--warning); color: var(--warning); justify-content: center; padding: 8px; font-weight: 800;">
+                                    Confirm Cash & Accept
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <div id="payment-confirm-GCASH-{{ job.id }}-pickup" style="display: none;">
+                            <form method="POST" action="{% url 'update_order_status' job.id %}" style="margin: 0; display: flex; flex-direction: column; gap: 8px;">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="PICKED_UP">
+                                <input type="hidden" name="payment_method" value="GCASH">
+                                <input type="text" name="payment_reference" class="clay-input" placeholder="Enter GCash Ref No." required style="font-weight: 800; font-size: 13px; border-color: #3B82F6; padding: 8px;">
+                                <button type="submit" class="clay-btn clay-btn-primary" style="width: 100%; justify-content: center; background: linear-gradient(to right, #3B82F6, #2563EB); border-color: rgba(255,255,255,0.2); color: white; padding: 8px; font-weight: 800;">
+                                    Verify Ref & Accept
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% else %}
+                    <form method="POST" action="{% url 'update_order_status' job.id %}" style="margin-top: auto;">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="PICKED_UP">
+                        <button type="submit" class="clay-btn" style="width: 100%; padding: var(--space-3); background: #f97316; color: white;">
+                            I have the laundry (Pre-Paid)
+                        </button>
+                    </form>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -153,10 +213,10 @@
             {% if my_pickups %}
             <div style="display: flex; flex-direction: column; gap: var(--space-3);">
                 {% for job in my_pickups %}
-                <div class="clay-card" style="padding: var(--space-3); display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); border: 1px solid transparent; transition: border 0.3s; cursor: pointer;">
+                <div class="clay-card" style="padding: var(--space-4); display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); border-left: 4px solid #3b82f6; transition: border 0.3s; cursor: pointer;">
                     <div style="min-width: 0; flex: 1;">
                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                            <span style="font-size: 10px; font-weight: 900; color: #2563eb; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(59, 130, 246, 0.1); padding: 2px 6px; border-radius: 4px;">Trunk Hold</span>
+                            <span style="font-size: 10px; font-weight: 900; color: #2563eb; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(59, 130, 246, 0.1); padding: 4px 8px; border-radius: 6px;">Trunk Hold</span>
                             <span style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted);">#{{ job.id }}</span>
                         </div>
                         <h3 style="font-size: var(--text-sm); font-weight: 900; color: var(--text-main); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ job.customer.username }}'s Laundry</h3>
@@ -191,20 +251,30 @@
             {% if available_deliveries %}
             <div style="display: flex; flex-direction: column; gap: var(--space-4);">
                 {% for delivery in available_deliveries %}
-                <div class="clay-card" style="border: 2px dashed rgba(16, 185, 129, 0.5); position: relative; overflow: hidden;">
-                    <div style="padding-left: var(--space-2);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2);">
+                <div class="clay-card" style="border: 2px dashed var(--secondary); padding: var(--space-5);">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4);">
                             <div>
-                                <span style="font-size: var(--text-xs); font-weight: 900; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.05em;">Ready #{{ delivery.id }}</span>
-                                <h3 style="font-size: var(--text-base); font-weight: 900; color: var(--text-main); margin: 2px 0 0 0;">{{ delivery.customer.username }}</h3>
+                                <span style="font-size: var(--text-xs); font-weight: 900; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.05em; background: rgba(16,185,129,0.1); padding: 4px 8px; border-radius: 6px;">Ready #{{ delivery.id }}</span>
+                                <h3 style="font-size: var(--text-base); font-weight: 900; color: var(--text-main); margin: 8px 0 0 0;">{{ delivery.customer.username }}</h3>
                             </div>
                         </div>
                         
-                        <div class="clay-inset" style="padding: var(--space-3); margin-bottom: var(--space-3); font-size: var(--text-sm); border: 1px solid var(--border);">
-                            <p style="color: var(--text-muted); font-weight: 700; display: flex; align-items: flex-start; gap: 8px; margin: 0 0 4px 0;">
+                        <div class="clay-inset" style="padding: var(--space-3); margin-bottom: var(--space-4); font-size: var(--text-sm); border: 1px solid var(--border);">
+                            <p style="color: var(--text-muted); font-weight: 700; display: flex; align-items: flex-start; gap: 8px; margin: 0 0 6px 0;">
                                 <i data-feather="map-pin" style="flex-shrink: 0; margin-top: 2px; width: 14px; height: 14px;"></i> 
-                                <span style="line-height: 1.2;">{{ delivery.customer.address|default:"No address stored" }}</span>
+                                <span style="line-height: 1.2;">{{ delivery.delivery_address|default:"No address stored" }}</span>
                             </p>
+                            <p style="color: var(--text-muted); font-weight: 800; display: flex; align-items: center; gap: 8px; margin: 0 0 6px 0;">
+                                <i data-feather="phone" style="flex-shrink: 0; width: 14px; height: 14px;"></i> 
+                                <span>{{ delivery.delivery_contact|default:"N/A" }}</span>
+                            </p>
+                            {% if delivery.delivery_notes %}
+                            <p style="color: var(--text-muted); font-weight: 600; display: flex; align-items: flex-start; gap: 8px; margin: 0;">
+                                <i data-feather="file-text" style="flex-shrink: 0; margin-top: 2px; width: 14px; height: 14px;"></i> 
+                                <span style="line-height: 1.2; font-style: italic;">{{ delivery.delivery_notes }}</span>
+                            </p>
+                            {% endif %}
                         </div>
 
                         <form method="POST" action="{% url 'update_order_status' delivery.id %}" style="margin: 0; border-top: 1px solid var(--border); padding-top: var(--space-3);">
@@ -238,26 +308,82 @@
             {% if deliveries %}
             <div style="display: flex; flex-direction: column; gap: var(--space-4);">
                 {% for delivery in deliveries %}
-                <div class="clay-card" style="border: 2px solid rgba(16, 185, 129, 0.3); position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--secondary);"></div>
-                    <div style="padding-left: var(--space-2);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2);">
+                <div class="clay-card" style="border-top: 4px solid var(--secondary); padding: var(--space-5);">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4);">
                             <div>
-                                <span style="font-size: var(--text-xs); font-weight: 900; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.05em;">Clean Goods #{{ delivery.id }}</span>
-                                <h3 style="font-size: var(--text-base); font-weight: 900; color: var(--text-main); margin: 2px 0 0 0;">{{ delivery.customer.username }}</h3>
+                                <span style="font-size: var(--text-xs); font-weight: 900; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.05em; background: rgba(16,185,129,0.1); padding: 4px 8px; border-radius: 6px;">Clean Goods #{{ delivery.id }}</span>
+                                <h3 style="font-size: var(--text-base); font-weight: 900; color: var(--text-main); margin: 8px 0 0 0;">{{ delivery.customer.username }}</h3>
                             </div>
                         </div>
                         
                         <div class="clay-inset" style="padding: var(--space-3); margin-bottom: var(--space-3); font-size: var(--text-sm); border: 1px solid var(--border);">
                             <p style="color: var(--text-muted); font-weight: 700; display: flex; align-items: flex-start; gap: 8px; margin: 0 0 4px 0;">
                                 <i data-feather="map-pin" style="flex-shrink: 0; margin-top: 2px; width: 14px; height: 14px;"></i> 
-                                <span style="line-height: 1.2;">{{ delivery.customer.address|default:"No address stored" }}</span>
+                                <span style="line-height: 1.2;">{{ delivery.delivery_address|default:"No address stored" }}</span>
                             </p>
-                            <p style="color: var(--text-muted); font-weight: 800; display: flex; align-items: center; gap: 8px; margin: 0;">
+                            <p style="color: var(--text-muted); font-weight: 800; display: flex; align-items: center; gap: 8px; margin: 0 0 4px 0;">
                                 <i data-feather="phone" style="flex-shrink: 0; width: 14px; height: 14px;"></i> 
-                                <span>{{ delivery.customer.phone_number|default:"N/A" }}</span>
+                                <span>{{ delivery.delivery_contact|default:"N/A" }}</span>
+                            </p>
+                            {% if delivery.delivery_notes %}
+                            <p style="color: var(--text-muted); font-weight: 600; display: flex; align-items: flex-start; gap: 8px; margin: 0;">
+                                <i data-feather="file-text" style="flex-shrink: 0; margin-top: 2px; width: 14px; height: 14px;"></i> 
+                                <span style="line-height: 1.2; font-style: italic;">{{ delivery.delivery_notes }}</span>
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        {% if delivery.payment_status == 'UNPAID' %}
+                        <div style="border-top: 1px solid var(--border); padding-top: var(--space-3); margin-bottom: var(--space-3);">
+                            <p style="font-size: var(--text-xs); font-weight: 900; color: var(--warning); text-transform: uppercase; margin-bottom: var(--space-2); display: flex; align-items: center; gap: 4px;">
+                                <i data-feather="alert-circle" style="width: 12px; height: 12px;"></i> Payment Collection Pending
+                            </p>
+                            
+                            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                <label style="flex: 1; cursor: pointer; text-align: center; border: 2px solid var(--border); border-radius: 8px; padding: 8px; background: transparent; transition: all 0.2s;" onclick="selectPaymentMethod('{{ delivery.id }}', 'CASH', this)">
+                                    <div style="font-weight: 800; font-size: 13px; color: var(--text-main); display: flex; align-items: center; justify-content: center;"><i data-feather="dollar-sign" style="width: 14px; margin-right: 4px;"></i> Cash</div>
+                                </label>
+                                <label style="flex: 1; cursor: pointer; text-align: center; border: 2px solid var(--border); border-radius: 8px; padding: 8px; background: transparent; transition: all 0.2s;" onclick="selectPaymentMethod('{{ delivery.id }}', 'GCASH', this)">
+                                    <div style="font-weight: 800; font-size: 13px; color: var(--text-main); display: flex; align-items: center; justify-content: center;"><i data-feather="smartphone" style="width: 14px; margin-right: 4px;"></i> GCash</div>
+                                </label>
+                            </div>
+
+                            <div id="payment-confirm-CASH-{{ delivery.id }}" style="display: none; margin-bottom: 12px;">
+                                <form method="POST" action="{% url 'mark_order_paid' delivery.id %}" style="margin: 0;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="payment_method" value="CASH">
+                                    <button type="submit" class="clay-btn clay-btn-secondary" style="width: 100%; border-color: var(--warning); color: var(--warning); font-size: var(--text-sm); justify-content: center; padding: 8px; font-weight: 800;">
+                                        Confirm Cash Received
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <div id="payment-confirm-GCASH-{{ delivery.id }}" style="display: none; margin-bottom: 12px;">
+                                <form method="POST" action="{% url 'mark_order_paid' delivery.id %}" style="margin: 0; display: flex; flex-direction: column; gap: 8px;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="payment_method" value="GCASH">
+                                    <input type="text" name="payment_reference" class="clay-input" placeholder="Enter GCash Ref No." required style="font-weight: 800; font-size: 13px; border-color: #3B82F6; padding: 8px;">
+                                    <button type="submit" class="clay-btn clay-btn-primary" style="width: 100%; justify-content: center; background: linear-gradient(to right, #3B82F6, #2563EB); border-color: rgba(255,255,255,0.2); font-size: var(--text-sm); color: white; padding: 8px; font-weight: 800;">
+                                        Verify Ref & Mark PAID
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div style="border-top: 1px solid var(--border); padding-top: var(--space-3); margin-bottom: var(--space-3);">
+                            <p style="font-size: var(--text-xs); font-weight: 900; color: var(--secondary); text-transform: uppercase; margin-bottom: var(--space-1); display: flex; align-items: center; gap: 4px;">
+                                <i data-feather="check-circle" style="width: 12px; height: 12px;"></i> Payment Received
+                            </p>
+                            <p style="font-size: 13px; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 6px;">
+                                <i data-feather="{% if delivery.payment_method == 'CASH' %}dollar-sign{% else %}smartphone{% endif %}" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
+                                {{ delivery.get_payment_method_display }}
+                                {% if delivery.payment_method == 'GCASH' and delivery.payment_reference %}
+                                <span style="font-size: 11px; color: var(--text-muted); background: var(--surface); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border);">Ref: {{ delivery.payment_reference }}</span>
+                                {% endif %}
                             </p>
                         </div>
+                        {% endif %}
 
                         <form method="POST" action="{% url 'update_order_status' delivery.id %}" style="margin: 0; border-top: 1px solid var(--border); padding-top: var(--space-3);">
                             {% csrf_token %}
@@ -285,6 +411,23 @@
         </section>
 
     </div>
-
 </div>
+
+<script>
+    function selectPaymentMethod(orderId, method, el) {
+        // Reset borders
+        const parent = el.parentElement;
+        Array.from(parent.children).forEach(child => {
+            child.style.borderColor = 'var(--border)';
+            child.style.background = 'transparent';
+        });
+        // Highlight selected
+        el.style.borderColor = method === 'CASH' ? 'var(--warning)' : '#3B82F6';
+        el.style.background = method === 'CASH' ? 'rgba(245, 158, 11, 0.05)' : 'rgba(59, 130, 246, 0.05)';
+        
+        // Toggle forms
+        document.getElementById(`payment-confirm-CASH-${orderId}`).style.display = method === 'CASH' ? 'block' : 'none';
+        document.getElementById(`payment-confirm-GCASH-${orderId}`).style.display = method === 'GCASH' ? 'block' : 'none';
+    }
+</script>
 {% endblock %}

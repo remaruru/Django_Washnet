@@ -31,9 +31,11 @@ urlpatterns = [
     path('book-appointment/', views.book_appointment, name='book_appointment'),
     path('customer-history/', views.customer_history, name='customer_history'),
     path('customer-create-order/', views.customer_create_order, name='customer_create_order'),
+    path('profile/', views.customer_profile, name='customer_profile'),
     
     # Employee Actions
     path('update-order-status/<int:order_id>/', views.update_order_status, name='update_order_status'),
+    path('mark-paid/<int:order_id>/', views.mark_order_paid, name='mark_order_paid'),
     path('process-appointment/<int:appointment_id>/', views.process_appointment, name='process_appointment'),
     path('pos/api/customers/', views.employee_pos_customer_api, name='employee_pos_customer_api'),
     path('pos/', views.employee_pos, name='employee_pos'),

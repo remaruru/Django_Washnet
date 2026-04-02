@@ -3,8 +3,320 @@
 {% block title %}Point of Sale - WASHNET POS{% endblock %}
 
 {% block extra_css %}
-<!-- Restoring isolated Tailwind just for POS complex layouts since base.html dropped it globally -->
-<script src="https://cdn.tailwindcss.com"></script>
+<!-- Strict High-Contrast POS Layout enforcement -->
+<style>
+/* High-Contrast POS Overrides */
+:root {
+    --text-main: #2b2831 !important;  
+    --text-muted: #4b4851 !important; 
+    --border: rgba(0,0,0,0.12) !important;
+    --workspace-bg: #E8E5EE !important;
+}
+
+.pos-workspace {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    flex-direction: column;
+    background-color: var(--workspace-bg);
+}
+
+@media (min-width: 768px) {
+    .pos-workspace {
+        flex-direction: row;
+        gap: var(--space-6);
+        padding: var(--space-6);
+    }
+    .pos-sidebar-right {
+        flex: none !important;
+        width: 400px !important;
+        border-radius: 32px !important;
+        background: #FFFFFF !important;
+        box-shadow: 0 30px 60px -15px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05) !important;
+        border: none !important;
+        overflow: hidden;
+        margin-right: 0;
+        height: 100%;
+    }
+}
+@media (min-width: 1280px) {
+    .pos-sidebar-right {
+        width: 460px !important;
+    }
+}
+
+.pos-catalog-left {
+    flex: 3;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+/* Service Crads Override */
+.clay-card {
+    background: #FFFFFF !important;
+    color: #332F3A !important;
+    backdrop-filter: none !important;
+    border: 1px solid rgba(0,0,0,0.08) !important;
+    box-shadow: 8px 8px 16px rgba(0,0,0,0.05), -8px -8px 16px rgba(255,255,255,0.8) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+.clay-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 12px 12px 24px rgba(0,0,0,0.08), -12px -12px 24px rgba(255,255,255,1) !important;
+    border-color: #7C3AED !important;
+}
+.clay-card:active {
+    transform: scale(0.95) !important;
+}
+
+/* Hardcode layout polyfills lost from Tailwind */
+.w-full { width: 100%; } .h-full { height: 100%; }
+.flex { display: flex; } .flex-col { flex-direction: column; } .flex-row { flex-direction: row; }
+.flex-1 { flex: 1; }
+.items-center { align-items: center; } .items-start { align-items: flex-start; } .items-end { align-items: flex-end; }
+.justify-center { justify-content: center; } .justify-between { justify-content: space-between; }
+.gap-1 { gap: 0.25rem; } .gap-2 { gap: 0.5rem; } .gap-3 { gap: 0.75rem; } .gap-4 { gap: 1rem; } .gap-8 { gap: 2rem; }
+.p-1 { padding: 0.25rem; } .p-2 { padding: 0.5rem; } .p-3 { padding: 0.75rem; } .p-4 { padding: 1rem; } .p-5 { padding: 1.25rem; } .p-6 { padding: 1.5rem; }
+.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; } .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+.m-0 { margin: 0; } .mb-2 { margin-bottom: 0.5rem; } .mb-3 { margin-bottom: 0.75rem; } .mb-4 { margin-bottom: 1rem; } .mt-4 { margin-top: 1rem; } .mt-1 { margin-top: 0.25rem; }
+.relative { position: relative; } .absolute { position: absolute; }
+.inset-y-0 { top: 0; bottom: 0; } .left-0 { left: 0; } .pl-10 { padding-left: 2.5rem; } .pl-3 { padding-left: 0.75rem; }
+.w-8 { width: 2rem; } .h-8 { height: 2rem; } .w-4 { width: 1rem; } .h-4 { height: 1rem; }
+.text-xs { font-size: 0.75rem; } .text-sm { font-size: 0.875rem; } .text-base { font-size: 1rem; } .text-lg { font-size: 1.125rem; } .text-xl { font-size: 1.25rem; }
+.text-2xl { font-size: 1.5rem; } .text-3xl { font-size: 1.875rem; }
+.font-medium { font-weight: 500; } .font-bold { font-weight: 800; } .font-black { font-weight: 900; }
+.text-main { color: var(--text-main); } .text-muted { color: var(--text-muted); } .text-primary { color: #7C3AED; } .text-secondary { color: #DB2777; }
+.tracking-wider { letter-spacing: 0.05em; } .uppercase { text-transform: uppercase; }
+.rounded-md { border-radius: 0.375rem; } .rounded-lg { border-radius: 0.5rem; } .rounded-full { border-radius: 9999px; } .rounded-xl { border-radius: 1rem; }
+.bg-surface { background-color: #FFFFFF; } .bg-background { background-color: #F8F9FA; } .bg-transparent { background-color: transparent; }
+.border-b { border-bottom: 1px solid var(--border); } .border-t { border-top: 1px solid var(--border); } .border { border: 1px solid var(--border); } .border-none { border: none; }
+.shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+.hidden { display: none !important; }
+.cursor-pointer { cursor: pointer; } .pointer-events-none { pointer-events: none; }
+.transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.z-10 { z-index: 10; } .z-50 { z-index: 50; }
+.overflow-y-auto { overflow-y: auto; }
+.appearance-none { appearance: none; -moz-appearance: none; -webkit-appearance: none; }
+.outline-none { outline: none; }
+
+.pos-services-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+}
+@media (min-width: 640px) {
+    .pos-services-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1280px) {
+    .pos-services-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* GCash Requirements */
+.gcash-input-container {
+    background: #F3F4F6 !important;
+    border: 2px solid #D1D5DB !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+    color: #111827 !important;
+}
+.gcash-input-container:focus {
+    border-color: #10B981 !important;
+    background: #FFFFFF !important;
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.2) !important;
+}
+
+/* Pay Button */
+.btn-pay-action {
+    background: linear-gradient(135deg, #8B5CF6, #6D28D9) !important;
+    color: white !important;
+    font-weight: 900 !important;
+    font-size: 1.125rem !important;
+    letter-spacing: 0.05em !important;
+    border: none !important;
+    padding: 1.25rem !important;
+    border-radius: 1rem !important;
+    text-transform: uppercase;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.4), 0 4px 6px -2px rgba(139, 92, 246, 0.2), inset 0 2px 4px rgba(255,255,255,0.3) !important;
+}
+.btn-pay-action:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 15px 25px -3px rgba(139, 92, 246, 0.5), 0 8px 10px -2px rgba(139, 92, 246, 0.3), inset 0 2px 4px rgba(255,255,255,0.4) !important;
+}
+.btn-pay-action:active {
+    transform: scale(0.95) !important;
+}
+
+/* Cart Items & Addons Fixes */
+.pos-addon-item {
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+.pos-total-row {
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: #111827;
+}
+
+/* Modals & Overlays */
+.pos-modal-overlay {
+    position: fixed;
+    top: 0; right: 0; bottom: 0; left: 0;
+    background-color: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+.pos-modal-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 42rem;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    padding: 0;
+}
+.pos-modal-card.product-size {
+    max-width: 32rem;
+}
+.pos-toast {
+    position: fixed;
+    top: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #0F172A;
+    color: #ffffff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.pos-toast.-translate-y-20 {
+    transform: translate(-50%, -5rem) !important;
+}
+.opacity-0 { opacity: 0 !important; }
+.scale-95 { transform: scale(0.95) !important; }
+.transition-opacity { transition: opacity 0.2s ease; }
+.transition-transform { transition: transform 0.2s ease; }
+
+
+/* Order Ticket & Controls */
+.pos-segmented-control {
+    display: flex;
+    background: var(--workspace-bg);
+    padding: 4px;
+    border-radius: 12px;
+    gap: 4px;
+}
+.pos-segmented-control button {
+    flex: 1; padding: 8px 12px; font-size: 13px; font-weight: 800;
+    color: var(--text-muted); background: transparent; border: none;
+    border-radius: 8px; cursor: pointer; transition: all 0.2s ease;
+}
+.pos-segmented-control button:hover { color: var(--text-main); }
+.pos-segmented-control button.active {
+    background: #FFFFFF; color: var(--text-main);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.pos-input-group label {
+    font-size: 11px; font-weight: 800; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: block;
+}
+.pos-clean-input {
+    width: 100%; background: var(--workspace-bg); border: 1px solid rgba(0,0,0,0.05);
+    padding: 10px 12px 10px 36px; border-radius: 10px; font-size: 14px; font-weight: 800;
+    color: var(--text-main); transition: all 0.2s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+.pos-clean-input:focus {
+    background: #FFFFFF; border-color: #7C3AED; outline: none; box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+.pos-clean-input.gcash-mode {
+    padding-left: 12px; background: #F3F4F6; border: 2px solid #D1D5DB; font-size: 18px; padding: 12px;
+}
+.pos-clean-input.gcash-mode:focus {
+    border-color: #10B981; background: #FFFFFF; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+.pos-payment-card { cursor: pointer; position: relative; }
+.pos-payment-card .card-content {
+    background: var(--workspace-bg); border: 2px solid transparent; border-radius: 12px;
+    padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 14px; font-weight: 800; color: var(--text-muted); transition: all 0.2s ease;
+}
+.pos-payment-card .card-content i { width: 18px; height: 18px; }
+.pos-payment-card input:checked + .card-content {
+    background: #EFEBF5; border-color: #7C3AED; color: #7C3AED;
+}
+.pos-payment-card input[value="GCASH"]:checked + .card-content {
+    background: #EFF6FF; border-color: #3B82F6; color: #3B82F6;
+}
+.pos-primary-btn {
+    background: #7C3AED; color: #FFFFFF; border: none; padding: 14px 20px; border-radius: 12px;
+    font-size: 15px; font-weight: 900; display: flex; align-items: center; justify-content: center;
+    gap: 8px; cursor: pointer; transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(124, 58, 237, 0.2), 0 2px 4px -1px rgba(124, 58, 237, 0.1);
+}
+.pos-primary-btn:hover {
+    background: #6D28D9; transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3), 0 4px 6px -2px rgba(124, 58, 237, 0.1);
+}
+.pos-primary-btn:active { transform: scale(0.96); }
+.pos-secondary-btn {
+    background: var(--workspace-bg); color: var(--text-main); border: 1px solid rgba(0,0,0,0.05);
+    padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 800;
+    cursor: pointer; transition: all 0.2s ease;
+}
+.pos-secondary-btn:hover { background: #E5E7EB; }
+
+/* Modals */
+.pos-modal-header { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; background: #FFFFFF; }
+.pos-modal-header .header-info { display: flex; align-items: center; gap: 12px; }
+.pos-modal-header h2 { font-size: 18px; font-weight: 900; color: var(--text-main); margin: 0; }
+.pos-modal-header .badge {
+    background: #F3F4F6; color: var(--text-muted); padding: 4px 8px; border-radius: 6px;
+    font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.pos-modal-header .close-btn {
+    width: 32px; height: 32px; border-radius: 8px; background: transparent; border: none;
+    color: var(--text-muted); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s ease;
+}
+.pos-modal-header .close-btn:hover { background: var(--workspace-bg); color: var(--error); }
+.pos-modal-body { padding: 24px; background: #FFFFFF; }
+.weight-group { background: var(--workspace-bg); border-radius: 16px; padding: 20px; }
+.weight-input {
+    width: 100%; background: #FFFFFF; border: 2px solid transparent; border-radius: 12px;
+    padding: 16px 48px 16px 16px; font-size: 24px; font-weight: 900; color: var(--text-main);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: all 0.2s ease;
+}
+.weight-input:focus { border-color: #7C3AED; outline: none; }
+.input-wrapper .unit {
+    position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+    font-size: 16px; font-weight: 800; color: var(--text-muted); pointer-events: none;
+}
+.pos-empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px; background: var(--workspace-bg); border: 2px dashed rgba(0,0,0,0.1);
+    border-radius: 16px; color: var(--text-muted); text-align: center; gap: 12px;
+}
+.pos-empty-state p { font-size: 13px; font-weight: 800; margin: 0; }
+.pos-modal-footer { padding: 20px 24px; display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;}
+
+</style>
 {% endblock %}
 
 {% block is_dashboard %}
@@ -61,10 +373,10 @@
         </header>
 
         <!-- SPLIT PANE POS LAYOUT -->
-        <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+        <main class="pos-workspace">
             
             <!-- LEFT: CATALOG -->
-            <div class="flex-[3] overflow-y-auto p-6 flex flex-col gap-8 custom-scrollbar">
+            <div class="pos-catalog-left custom-scrollbar">
                 
                 <!-- Services Box -->
                 <div>
@@ -75,7 +387,7 @@
                         <span class="clay-badge clay-badge-gray">Billed per kg</span>
                     </div>
                     
-                    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div class="pos-services-grid">
                         {% for service in services %}
                         <div class="clay-card p-4 cursor-pointer hover:border-primary transition-all group flex flex-col justify-between"
                             onclick="openServiceModal('{{ service.id }}', '{{ service.name|escapejs }}', parseFloat('{{ service.price }}'))"
@@ -108,7 +420,7 @@
                         <span class="clay-badge clay-badge-gray">Billed per unit</span>
                     </div>
                     
-                    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div class="pos-services-grid">
                         {% for product in products %}
                         <div class="clay-card p-4 cursor-pointer hover:border-primary transition-all group flex flex-col justify-between"
                             onclick="openProductModal('{{ product.id }}', '{{ product.name|escapejs }}', parseFloat('{{ product.price }}'))"
@@ -135,43 +447,71 @@
             </div>
 
             <!-- RIGHT: ACTIVE CART / REGISTER -->
-            <div class="flex-[2] md:flex-none md:w-[400px] xl:w-[450px] bg-surface border-l border-border flex flex-col shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.02)] z-10">
+            <div class="pos-sidebar-right flex flex-col h-full overflow-hidden">
+                <form id="posForm" method="POST" action="{% url 'employee_pos' %}" class="flex flex-col h-full m-0 w-full overflow-hidden">
                 
-                <!-- Client Assignment -->
-                <div class="p-5 border-b border-border shrink-0 bg-background">
-                    <h2 class="text-sm font-bold text-main uppercase tracking-wider mb-3">Order Ticket</h2>
-                    
-                    <form id="posForm" method="POST" action="{% url 'employee_pos' %}" class="flex flex-col h-full m-0">
+                <!-- HEADER -->
+                <div class="p-5 border-b border-border shrink-0 bg-surface flex flex-col gap-2">
+                    <h2 class="text-sm font-black text-main uppercase tracking-widest m-0 flex items-center gap-2">
+                        <i data-feather="clipboard" class="text-primary" style="width:16px;height:16px;"></i> Order Ticket
+                    </h2>
                         {% csrf_token %}
                         
-                        <!-- Customer / Walk-in Toggle -->
-                        <div class="flex clay-inset rounded-lg p-1 mb-3 gap-1">
-                            <button type="button" id="btnExisting" class="flex-1 text-xs font-bold py-2 rounded-md bg-surface shadow-sm text-main transition-all" onclick="toggleCustomerMode('existing')">Existing Account</button>
-                            <button type="button" id="btnWalkin" class="flex-1 text-xs font-bold py-2 rounded-md text-muted hover:text-main transition-all" onclick="toggleCustomerMode('walkin')">Walk-in Nickname</button>
+                        <!-- Customer Toggle Control -->
+                        <div class="pos-segmented-control mt-3">
+                            <button type="button" id="btnExisting" class="active" onclick="toggleCustomerMode('existing')">Registered</button>
+                            <button type="button" id="btnWalkin" onclick="toggleCustomerMode('walkin')">Walk-in</button>
                         </div>
 
                         <!-- Existing Customer Input -->
-                        <div id="existingCustomerGroup" class="relative group">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted transition-colors z-10">
-                                <i data-feather="search" style="width: 16px; height: 16px;"></i>
+                        <div id="existingCustomerGroup" class="pos-input-group mt-3 relative">
+                            <label>Account Search</label>
+                            <div class="relative">
+                                <i data-feather="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted" style="width: 14px; height: 14px;"></i>
+                                <input type="text" id="customer_search" class="pos-clean-input" placeholder="Name or username..." autocomplete="off">
+                                <input type="hidden" id="customer_id" name="customer_id" value="{{ initial_customer_id }}">
                             </div>
-                            <input type="text" id="customer_search" class="clay-input pl-10 font-bold" placeholder="Find Customer username or name..." autocomplete="off">
-                            <input type="hidden" id="customer_id" name="customer_id" value="{{ initial_customer_id }}">
-                            <p class="text-[10px] text-muted mt-1 font-semibold px-1">Or leave entirely blank if unknown.</p>
-                            
-                            <!-- Autocomplete Dropdown Panel -->
-                            <div id="customerSuggestions" class="absolute z-50 w-full mt-1 border border-border rounded-xl shadow-clayCard hidden max-h-[220px] overflow-y-auto custom-scrollbar" style="background: #ffffff; backdrop-filter: none;">
-                                <!-- JS inserts list options here -->
-                            </div>
+                            <div id="customerSuggestions" class="absolute z-50 w-full mt-1 border border-border rounded-xl shadow-clayCard hidden max-h-[220px] overflow-y-auto custom-scrollbar" style="background: #ffffff;"></div>
                         </div>
 
                         <!-- Walk-in Name Input -->
-                        <div id="walkinNameGroup" class="relative group hidden">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted transition-colors z-10">
-                                <i data-feather="user" style="width: 16px; height: 16px;"></i>
+                        <div id="walkinNameGroup" class="pos-input-group mt-3 hidden">
+                            <label>Guest Nickname</label>
+                            <div class="relative">
+                                <i data-feather="user" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted" style="width: 14px; height: 14px;"></i>
+                                <input type="text" id="walkin_name" name="walkin_name" class="pos-clean-input" placeholder="e.g. 'Ate May'">
                             </div>
-                            <input type="text" id="walkin_name" name="walkin_name" class="clay-input pl-10 font-bold" placeholder="Enter nickname... e.g. 'Ate May'">
-                            <p class="text-[10px] text-muted mt-1 font-semibold px-1">Does not create a registered account.</p>
+                        </div>
+
+                        <!-- Fulfillment Preference -->
+                        <div class="pos-segmented-control mt-3" style="font-size: 11px;">
+                            <button type="button" id="btnReleasePickup" class="active" onclick="toggleReleaseMode('PICKUP')">Customer Pickup</button>
+                            <button type="button" id="btnReleaseDelivery" onclick="toggleReleaseMode('DELIVERY')">Deliver to Customer</button>
+                        </div>
+                        <input type="hidden" name="release_method" id="release_method" value="PICKUP">
+
+                        <div id="deliveryDetailsGroup" class="hidden mt-3 flex flex-col gap-2">
+                            <div class="pos-input-group">
+                                <label>Delivery Address <span style="color:var(--secondary);">*</span></label>
+                                <div class="relative">
+                                    <i data-feather="map-pin" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted" style="width: 14px; height: 14px;"></i>
+                                    <input type="text" id="delivery_address" name="delivery_address" class="pos-clean-input" placeholder="Street, Brgy, City">
+                                </div>
+                            </div>
+                            <div class="pos-input-group">
+                                <label>Contact Number <span style="color:var(--secondary);">*</span></label>
+                                <div class="relative">
+                                    <i data-feather="phone" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted" style="width: 14px; height: 14px;"></i>
+                                    <input type="text" id="delivery_contact" name="delivery_contact" class="pos-clean-input" placeholder="09XX...">
+                                </div>
+                            </div>
+                            <div class="pos-input-group">
+                                <label>Notes / Landmarks (Optional)</label>
+                                <div class="relative">
+                                    <i data-feather="file-text" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted" style="width: 14px; height: 14px;"></i>
+                                    <input type="text" id="delivery_notes" name="delivery_notes" class="pos-clean-input" placeholder="Near the gas station">
+                                </div>
+                            </div>
                         </div>
 
                         <script>
@@ -184,25 +524,48 @@
                                 const inputWalkin = document.getElementById('walkin_name');
                                 
                                 if (mode === 'existing') {
-                                    btnExisting.className = 'flex-1 text-xs font-bold py-2 rounded-md bg-surface shadow-sm text-main transition-all';
-                                    btnWalkin.className = 'flex-1 text-xs font-bold py-2 rounded-md text-muted hover:text-main transition-all';
+                                    btnExisting.classList.add('active');
+                                    btnWalkin.classList.remove('active');
                                     groupExisting.classList.remove('hidden');
                                     groupWalkin.classList.add('hidden');
                                     inputWalkin.value = '';
                                 } else {
-                                    btnWalkin.className = 'flex-1 text-xs font-bold py-2 rounded-md bg-surface shadow-sm text-main transition-all';
-                                    btnExisting.className = 'flex-1 text-xs font-bold py-2 rounded-md text-muted hover:text-main transition-all';
+                                    btnWalkin.classList.add('active');
+                                    btnExisting.classList.remove('active');
                                     groupWalkin.classList.remove('hidden');
                                     groupExisting.classList.add('hidden');
                                     inputCustomer.value = '';
+                                    
+                                    const addrField = document.getElementById('delivery_address');
+                                    const phoneField = document.getElementById('delivery_contact');
+                                    const notesField = document.getElementById('delivery_notes');
+                                    if(addrField) addrField.value = '';
+                                    if(phoneField) phoneField.value = '';
+                                    if(notesField) notesField.value = '';
                                 }
                             }
                             
-                            // Initialize toggle based on pre-filled data
-                            document.addEventListener("DOMContentLoaded", () => {
-                                if ("{{ initial_customer_id }}") {
-                                    toggleCustomerMode('existing');
+                            function toggleReleaseMode(mode) {
+                                document.getElementById('release_method').value = mode;
+                                const btnPickup = document.getElementById('btnReleasePickup');
+                                const btnDelivery = document.getElementById('btnReleaseDelivery');
+                                const delGroup = document.getElementById('deliveryDetailsGroup');
+                                if (mode === 'PICKUP') {
+                                    btnPickup.classList.add('active');
+                                    btnDelivery.classList.remove('active');
+                                    delGroup.classList.add('hidden');
+                                    document.getElementById('delivery_address').removeAttribute('required');
+                                    document.getElementById('delivery_contact').removeAttribute('required');
+                                } else {
+                                    btnPickup.classList.remove('active');
+                                    btnDelivery.classList.add('active');
+                                    delGroup.classList.remove('hidden');
+                                    document.getElementById('delivery_address').setAttribute('required', 'true');
+                                    document.getElementById('delivery_contact').setAttribute('required', 'true');
                                 }
+                            }
+                            document.addEventListener("DOMContentLoaded", () => {
+                                if ("{{ initial_customer_id }}") { toggleCustomerMode('existing'); }
                             });
                         </script>
 
@@ -212,57 +575,50 @@
                             <i data-feather="clock" class="text-secondary shrink-0 mt-0.5" style="width: 14px; height: 14px;"></i>
                             <div>
                                 <p class="text-xs font-bold text-secondary tracking-wide uppercase">Linked System Appointment</p>
-                                <p class="text-xs text-secondary-hover font-medium mt-0.5">Fulfilling task #{{ appointment_id }} automatically</p>
+                                <p class="text-[10px] text-secondary-hover font-bold mt-0.5">Automated fulfillment task #{{ appointment_id }}</p>
                             </div>
                         </div>
                         {% endif %}
                 </div>
 
-                <!-- Line Items (Scrollable) -->
-                <div id="orderItems" class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-surface text-sm">
-                    <!-- JS Injects cart items here -->
-                    <div class="flex flex-col items-center justify-center h-full text-slate-400 opacity-60">
-                        <i data-feather="shopping-bag" style="width: 48px; height: 48px; margin-bottom: 1rem; stroke-width: 1px;"></i>
-                        <p class="font-bold">Ticket is empty</p>
-                        <p class="text-xs mt-1 font-medium">Select services from catalog</p>
+                <!-- Line Items -->
+                <div id="orderItems" class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-background">
+                    <div class="flex flex-col items-center justify-center h-full text-muted opacity-50 empty-cart-state">
+                        <i data-feather="monitor" style="width: 32px; height: 32px; margin-bottom: 0.5rem; stroke-width: 1.5px;"></i>
+                        <p class="font-bold text-sm">No items yet</p>
                     </div>
                 </div>
 
                 <!-- Checkout Footer -->
-                <div class="p-6 bg-surface border-t border-border shrink-0 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.02)]">
-                    
-                    <div class="flex justify-between items-end mb-4 text-muted">
-                        <span class="text-sm font-bold uppercase tracking-wider">Subtotal</span>
-                        <span id="subtotalAmount" class="font-bold text-main text-lg tabular-nums">₱0.00</span>
+                <div class="p-5 bg-surface border-t border-border shrink-0">
+                    <div class="flex justify-between items-end mb-2 text-muted">
+                        <span class="text-xs font-bold uppercase tracking-wider">Subtotal</span>
+                        <span id="subtotalAmount" class="font-bold text-main text-sm tabular-nums">₱0.00</span>
+                    </div>
+                    <div class="flex justify-between items-end pb-4 border-b border-border">
+                        <span class="text-sm font-black text-main uppercase tracking-widest">Total</span>
+                        <span id="totalAmount" class="pos-total-row tabular-nums">₱0.00</span>
                     </div>
 
-                    <div class="flex justify-between items-end mb-6 pb-4 border-b border-border">
-                        <span class="text-2xl font-black text-main leading-none">Total</span>
-                        <span id="totalAmount" class="text-4xl font-black text-secondary leading-none tracking-tight tabular-nums">₱0.00</span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 mb-6">
-                        <label class="cursor-pointer relative">
-                            <input type="radio" name="payment_method" value="CASH" class="peer sr-only" checked onchange="togglePaymentRef()">
-                            <div class="clay-inset rounded-lg p-3 text-center transition-all font-bold text-sm bg-surface border border-transparent peer-checked:bg-primary-light peer-checked:border-primary">
-                                <i data-feather="dollar-sign" class="mx-auto mb-1 text-slate-500 peer-checked:text-primary transition-colors"></i>
-                                Cash
+                    <div class="flex gap-2 mt-4 mb-4">
+                        <label class="pos-payment-card flex-1">
+                            <input type="radio" name="payment_method" value="CASH" class="sr-only hidden" checked onchange="togglePaymentRef()">
+                            <div class="card-content">
+                                <i data-feather="dollar-sign"></i> <span>Cash</span>
                             </div>
                         </label>
-                        <label class="cursor-pointer relative">
-                            <input type="radio" name="payment_method" value="GCASH" class="peer sr-only" onchange="togglePaymentRef()">
-                            <div class="clay-inset rounded-lg p-3 text-center transition-all font-bold text-sm bg-surface border border-transparent peer-checked:bg-blue-50 peer-checked:border-blue-500 text-main">
-                                <i data-feather="smartphone" class="mx-auto mb-1 text-slate-500 peer-checked:text-blue-500 transition-colors"></i>
-                                GCash
+                        <label class="pos-payment-card flex-1">
+                            <input type="radio" name="payment_method" value="GCASH" class="sr-only hidden" onchange="togglePaymentRef()">
+                            <div class="card-content">
+                                <i data-feather="smartphone"></i> <span>GCash</span>
                             </div>
                         </label>
                     </div>
 
                     <!-- Dynamic Payment Reference (GCash) -->
-                    <div id="paymentRefGroup" class="mb-6 hidden">
-                        <label class="form-label font-bold text-sm text-main">GCash Reference Number</label>
-                        <input type="text" id="payment_reference" name="payment_reference" class="clay-input font-bold" placeholder="e.g. 1002345689">
-                        <p class="text-[10px] text-error mt-1 font-semibold px-1 hidden" id="paymentRefError">Reference code is strictly required for GCash.</p>
+                    <div id="paymentRefGroup" class="mb-4 hidden pos-input-group">
+                        <label class="flex items-center gap-1"><i data-feather="info" style="width: 12px; height: 12px;"></i> Trace Number</label>
+                        <input type="text" id="payment_reference" name="payment_reference" class="pos-clean-input gcash-mode" placeholder="e.g. 1002345689">
                     </div>
 
                     <script>
@@ -274,20 +630,17 @@
                             } else {
                                 refGroup.classList.add('hidden');
                                 document.getElementById('payment_reference').value = '';
-                                document.getElementById('paymentRefError').classList.add('hidden');
                             }
                         }
                     </script>
 
                     <input type="hidden" name="order_data" id="orderDataPayload">
                     
-                    <button type="button" onclick="submitOrder()" id="chargeBtn" class="clay-btn clay-btn-primary w-full py-4 text-base rounded-xl font-black uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed justify-center gap-2">
-                        <i data-feather="credit-card"></i> Pay & Print Ticket
+                    <button type="button" onclick="submitOrder()" id="chargeBtn" class="pos-primary-btn w-full mt-2 disabled:opacity-50">
+                        <span>Confirm & Print</span> <i data-feather="check-circle" style="width: 18px; height: 18px;"></i>
                     </button>
-                    
-                    </form>
                 </div>
-
+                </form>
             </div>
         </main>
     </div>
@@ -307,76 +660,73 @@
 
 <!-- MODALS -->
 <!-- Service Modal -->
-<div id="serviceModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center px-4 opacity-0 transition-opacity">
-    <div class="clay-card w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] scale-95 transition-transform duration-200 p-0" id="serviceModalCard" style="background: #ffffff; backdrop-filter: none;">
+<div id="serviceModal" class="hidden pos-modal-overlay opacity-0 transition-opacity">
+    <div class="pos-modal-card scale-95 transition-transform" id="serviceModalCard">
         
-        <div class="px-8 py-5 border-b border-border flex justify-between items-center bg-background shrink-0">
-            <div>
-                <h2 id="modalTitle" class="text-xl font-bold text-main m-0">Add Service</h2>
-                <p id="modalSubtitle" class="text-xs font-bold text-primary uppercase tracking-wider mt-1">Setup Load</p>
+        <div class="pos-modal-header border-b border-border shrink-0">
+            <div class="header-info">
+                <h2 id="modalTitle">Add Service</h2>
+                <span class="badge" id="modalSubtitle">Base</span>
             </div>
-            <button type="button" onclick="closeServiceModal()" class="w-10 h-10 rounded-full bg-border text-slate-600 flex items-center justify-center hover:bg-slate-300 transition-colors">
-                <i data-feather="x" style="width: 20px; height: 20px;"></i>
-            </button>
+            <button type="button" onclick="closeServiceModal()" class="close-btn"><i data-feather="x"></i></button>
         </div>
         
-        <div class="p-8 overflow-y-auto custom-scrollbar flex-1">
-            <div class="form-group mb-6">
-                <label class="form-label font-bold text-sm">Scale Weight (kg)</label>
-                <div class="relative">
-                    <input type="number" id="modalWeight" class="clay-input text-lg py-3 font-black pr-12" placeholder="0.0" min="0.1" step="0.1" oninput="calculateLoads()">
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-muted z-10">kg</div>
+        <div class="pos-modal-body overflow-y-auto custom-scrollbar flex-1">
+            <div class="weight-group relative mb-5 border border-border">
+                <label class="font-bold text-xs text-muted uppercase tracking-wider mb-2 block">Total Scale Weight (kg)</label>
+                <div class="relative input-wrapper">
+                    <input type="number" id="modalWeight" class="weight-input" placeholder="0.0" min="0.1" step="0.1" oninput="calculateLoads()">
+                    <span class="unit">kg</span>
                 </div>
             </div>
 
-            <div id="loadsContainer" class="flex flex-col gap-4 mt-6">
-                <div class="text-center p-8 bg-background rounded-lg border border-dashed border-border text-muted">
-                    <i data-feather="target" class="mx-auto mb-2"></i>
-                    <p class="text-sm font-semibold">Enter weight to construct loads automatically.</p>
+            <div id="loadsContainer" class="flex flex-col gap-4">
+                <div class="pos-empty-state">
+                    <i data-feather="settings"></i>
+                    <p>Enter scale weight to compute optimized loads.</p>
                 </div>
             </div>
         </div>
 
-        <div class="p-6 border-t border-border bg-surface flex justify-end gap-4 shrink-0">
-            <button type="button" class="clay-btn clay-btn-secondary px-8 py-3 text-base" onclick="closeServiceModal()">Cancel</button>
-            <button type="button" class="clay-btn clay-btn-primary px-10 py-3 text-base font-bold" onclick="confirmServiceAddition()">Save to Ticket</button>
+        <div class="pos-modal-footer border-t border-border bg-background shrink-0">
+            <button type="button" class="pos-secondary-btn" onclick="closeServiceModal()">Cancel</button>
+            <button type="button" class="pos-primary-btn" onclick="confirmServiceAddition()">Save to Ticket</button>
         </div>
     </div>
 </div>
 
 <!-- Product Modal -->
-<div id="productModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center px-4 opacity-0 transition-opacity">
-    <div class="clay-card w-full max-w-lg overflow-hidden flex flex-col scale-95 transition-transform duration-200 p-0" id="productModalCard" style="background: #ffffff; backdrop-filter: none;">
+<div id="productModal" class="hidden pos-modal-overlay opacity-0 transition-opacity">
+    <div class="pos-modal-card product-size scale-95 transition-transform" id="productModalCard">
         
-        <div class="px-8 py-5 border-b border-border flex justify-between items-center bg-background">
-            <div>
-                <h2 id="productModalTitle" class="text-xl font-bold text-main m-0">Add Item</h2>
-                <p id="productModalSubtitle" class="text-xs font-bold text-primary uppercase tracking-wider mt-1">Retail</p>
+        <div class="pos-modal-header border-b border-border shrink-0">
+            <div class="header-info">
+                <h2 id="productModalTitle">Add Item</h2>
+                <span class="badge" id="productModalSubtitle">Retail</span>
             </div>
-            <button type="button" onclick="closeProductModal()" class="w-10 h-10 rounded-full bg-border text-slate-600 flex items-center justify-center hover:bg-slate-300 transition-colors">
-                <i data-feather="x" style="width: 20px; height: 20px;"></i>
-            </button>
+            <button type="button" onclick="closeProductModal()" class="close-btn"><i data-feather="x"></i></button>
         </div>
         
-        <div class="p-8">
-            <div class="form-group m-0">
-                <label class="form-label font-bold text-sm">Quantity</label>
+        <div class="pos-modal-body overflow-y-auto custom-scrollbar flex-1">
+            <div class="weight-group relative border border-border">
+                <label class="font-bold text-xs text-muted uppercase tracking-wider mb-2 block">Quantity</label>
                 <div class="flex items-center gap-4">
-                    <button type="button" onclick="document.getElementById('productModalQty').stepDown()" class="w-12 h-12 rounded-lg bg-background flex items-center justify-center font-bold text-xl hover:bg-border transition-colors border border-border">-</button>
-                    <input type="number" id="productModalQty" class="clay-input text-center text-xl py-2 font-black flex-1" value="1" min="1" step="1">
-                    <button type="button" onclick="document.getElementById('productModalQty').stepUp()" class="w-12 h-12 rounded-lg bg-background flex items-center justify-center font-bold text-xl hover:bg-border transition-colors border border-border">+</button>
+                    <button type="button" onclick="document.getElementById('productModalQty').stepDown()" class="w-12 h-12 rounded-lg bg-surface flex items-center justify-center font-bold text-xl hover:bg-border transition-colors border border-border">-</button>
+                    <input type="number" id="productModalQty" class="pos-clean-input text-center text-xl font-black flex-1 m-0" value="1" min="1" step="1" style="padding-left: 0;">
+                    <button type="button" onclick="document.getElementById('productModalQty').stepUp()" class="w-12 h-12 rounded-lg bg-surface flex items-center justify-center font-bold text-xl hover:bg-border transition-colors border border-border">+</button>
                 </div>
             </div>
         </div>
 
-        <div class="p-6 border-t border-border bg-surface flex justify-end gap-3">
-            <button type="button" class="clay-btn clay-btn-primary w-full shadow-sm font-bold py-3 text-base" onclick="confirmProductAddition()">Add Extras</button>
+        <div class="pos-modal-footer border-t border-border bg-background shrink-0">
+            <button type="button" class="pos-secondary-btn" onclick="closeProductModal()">Cancel</button>
+            <button type="button" class="pos-primary-btn" onclick="confirmProductAddition()">Add Retail Option</button>
         </div>
     </div>
 </div>
 
 <!-- Custom Toast -->
-<div id="toastNotification" class="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full font-bold shadow-xl z-[100] flex items-center gap-2 transform -translate-y-20 opacity-0 transition-all duration-300">
+<div id="toastNotification" class="pos-toast -translate-y-20 opacity-0 transition-all duration-300">
     <i data-feather="alert-triangle" class="text-warning" style="width: 18px; height: 18px;"></i>
     <span id="toastMessage">Error</span>
 </div>
@@ -429,9 +779,9 @@
         document.getElementById('modalWeight').value = '';
         
         document.getElementById('loadsContainer').innerHTML = `
-            <div class="text-center p-8 bg-background rounded-lg border border-dashed border-border text-muted">
-                <i data-feather="target" class="mx-auto mb-2"></i>
-                <p class="text-sm font-semibold">Enter weight to construct loads automatically.</p>
+            <div class="pos-empty-state">
+                <i data-feather="settings"></i>
+                <p>Enter scale weight to compute optimized loads.</p>
             </div>
         `;
         feather.replace();
@@ -450,7 +800,13 @@
         const loadsContainer = document.getElementById('loadsContainer');
         
         if (isNaN(weight) || weight <= 0) {
-            loadsContainer.innerHTML = '';
+            loadsContainer.innerHTML = `
+                <div class="pos-empty-state">
+                    <i data-feather="settings"></i>
+                    <p>Enter scale weight to compute optimized loads.</p>
+                </div>
+            `;
+            feather.replace();
             return;
         }
 
@@ -474,13 +830,17 @@
             
             availableProducts.forEach(prod => {
                 html += `
-                    <label class="flex items-center justify-between p-2.5 rounded-lg border border-border cursor-pointer hover:border-primary peer-checked:border-primary transition-colors hover:bg-background select-none group">
-                        <div class="flex items-center gap-2">
-                            <input type="checkbox" id="load_${i}_prod_${prod.id}" value="${prod.id}" class="w-4 h-4 accent-primary cursor-pointer">
-                            <span class="font-bold text-sm text-main group-hover:text-primary transition-colors leading-none">${prod.name}</span>
+                    <div class="flex items-center justify-between p-2 rounded-lg border border-border transition-colors bg-background group">
+                        <div class="flex flex-col justify-center">
+                            <span class="font-bold text-sm text-main leading-none mb-1">${prod.name}</span>
+                            <span class="text-xs font-black text-primary leading-none">+₱${prod.price}</span>
                         </div>
-                        <span class="text-xs font-black text-muted bg-background px-1.5 py-0.5 rounded leading-none">+₱${prod.price}</span>
-                    </label>
+                        <div class="flex items-center gap-1">
+                            <button type="button" onclick="const input = document.getElementById('load_${i}_prod_${prod.id}'); if(input.value > 0) input.value = parseInt(input.value) - 1;" class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-lg text-muted bg-surface shadow-sm border border-border hover:text-primary transition-colors">-</button>
+                            <input type="number" id="load_${i}_prod_${prod.id}" class="w-8 text-center font-black text-sm bg-transparent border-none appearance-none outline-none text-main" value="0" min="0" readonly>
+                            <button type="button" onclick="const input = document.getElementById('load_${i}_prod_${prod.id}'); input.value = parseInt(input.value) + 1;" class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-lg text-muted bg-surface shadow-sm border border-border hover:text-primary transition-colors">+</button>
+                        </div>
+                    </div>
                 `;
             });
             
@@ -490,7 +850,7 @@
                              <i data-feather="edit-2" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
                              <span class="text-xs font-bold text-main">Instruction Notes (Optional)</span>
                          </div>
-                         <textarea id="load_${i}_notes" class="clay-input w-full text-sm resize-none font-semibold" rows="2" placeholder="e.g. Yellow bag, do not mix, delicate items..."></textarea>
+                         <textarea id="load_${i}_notes" class="pos-clean-input w-full text-sm resize-none font-semibold" rows="2" style="padding: 10px;" placeholder="e.g. Yellow bag, do not mix, delicate items..."></textarea>
                      </div>
                 </div>`;
         }
@@ -530,10 +890,10 @@
                 total: currentService.price * 1
             });
             
-            // Push addons explicitly bound to this load index
             availableProducts.forEach(prod => {
-                const checkbox = document.getElementById(`load_${i}_prod_${prod.id}`);
-                if (checkbox && checkbox.checked) {
+                const qtyInput = document.getElementById(`load_${i}_prod_${prod.id}`);
+                if (qtyInput && parseInt(qtyInput.value) > 0) {
+                    const qty = parseInt(qtyInput.value);
                     cart.push({
                         type: 'Product',
                         item_type: 'ADDON',
@@ -542,8 +902,8 @@
                         name: prod.name,
                         desc: `Add-on bound to Load ${currentLoadId}`,
                         price: prod.price,
-                        qty: 1,
-                        total: prod.price
+                        qty: qty,
+                        total: prod.price * qty
                     });
                 }
             });
@@ -732,7 +1092,7 @@
                         data.results.forEach(user => {
                             const div = document.createElement('div');
                             div.className = 'p-3 hover:bg-primary-light cursor-pointer border-b border-border last:border-0 transition-colors group';
-                            div.onclick = () => selectCustomer(user.id, user.full_name);
+                            div.onclick = () => selectCustomer(user.id, user.full_name, user.address, user.phone_number, user.delivery_notes);
                             div.innerHTML = `
                                 <p class="font-bold text-main group-hover:text-primary transition-colors">${user.full_name}</p>
                                 <p class="text-xs font-semibold text-muted">@${user.username}</p>
@@ -752,10 +1112,18 @@
         }, 250);
     });
 
-    function selectCustomer(id, fullName) {
+    function selectCustomer(id, fullName, address, phone, notes) {
         searchInput.value = fullName;
         idInput.value = id;
         suggestionsPanel.classList.add('hidden');
+        
+        const addrField = document.getElementById('delivery_address');
+        const phoneField = document.getElementById('delivery_contact');
+        const notesField = document.getElementById('delivery_notes');
+        
+        if(addrField) addrField.value = address || '';
+        if(phoneField) phoneField.value = phone || '';
+        if(notesField) notesField.value = notes || '';
     }
 
     // Close autocomplete when clicking outside

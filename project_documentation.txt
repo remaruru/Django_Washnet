@@ -1,0 +1,105 @@
+# Washnet - Comprehensive Project Documentation
+
+## 1. Project Overview
+Washnet is a comprehensive Laundry Point-of-Sale (POS) and Management Web Application built with the Django Web Framework. It facilitates the entire laundry lifecycle from customer booking (drop-off, walk-in, or delivery) to shop processing, rider delivery, and administrative oversight. The system features role-based access control with distinct dashboards and workflows for Admins, Employees, Riders, and Customers.
+
+## 2. Technical Stack
+- Backend Framework: Django 6.0.2 (Python)
+- Database: SQLite (Default, configurable in settings.py)
+- Frontend: Django Templates (HTML/CSS/JS), rendered on the server.
+- Key Libraries: qrcode (for receipt generation), rest_framework, corsheaders.
+
+## 3. Core Entities (Data Models)
+
+Located in core/models.py, the database schema revolves around these primary entities:
+
+### 3.1 User (User, EmployeeProfile)
+Extends Django's AbstractUser to support distinct roles using a RoleChoices enumeration.
+- Roles: ADMIN, EMPLOYEE, CUSTOMER, RIDER.
+- Fields: standard auth fields + phone_number, address, and role.
+- EmployeeProfile: A one-to-one extension to track how many orders an employee has processed.
+
+### 3.2 Service & Product
+- Service: Core laundry services (e.g., Wash & Dry, Wash Only). Charged per kg (weight).
+- Product: Add-ons and retail items (e.g., Fabric Conditioner, Detergent, Bleach). Charged per piece.
+
+### 3.3 Order
+The central entity tracking a laundry transaction.
+- Order Types (OrderTypeChoices): WALK_IN, DELIVERY, APPOINTMENT (Scheduled pickup), DROP_OFF (Customer drops off at shop).
+- Status (StatusChoices): 
+  - EXPECTING_DROP_OFF, PENDING_ACCEPTANCE (waiting for rider)
+  - RIDER_ACCEPTED, PICKED_UP
+  - AT_SHOP, PROCESSING, READY_FOR_DELIVERY
+  - OUT_FOR_DELIVERY, COMPLETED, CANCELLED
+- Payment Method/Status: CASH / GCASH / PAYPAL, and PAID / UNPAID. (GCash requires manual admin verification).
+- Receipt Token: Generates a secure, random 12-character alphanumeric string used for public QR code receipt verification.
+- QR Code: An image field storing the auto-generated QR code linking to the receipt URL.
+
+### 3.4 OrderItem
+A line-item belonging to an Order.
+- Links to either a Service or Product.
+- Tracks quantity (kg for services, pcs for products), price snapshot, and a load_index (to separate customer washing loads).
+
+### 3.5 Appointment
+Used by customers to schedule future laundry pickups or deliveries.
+- Status: PENDING, CONFIRMED, COMPLETED, CANCELLED.
+- Converts into an Order once an Employee or Rider processes it via the POS.
+
+---
+
+## 4. Role Workflows & Business Logic
+
+### 4.1 Customer Workflow
+- Registration/Login: Customers can register their accounts directly.
+- Home Page: Displays a dynamic (mocked) 7-day weather forecast suggesting the best days to do laundry.
+- Dashboard: Views active orders tracking their real-time status and upcoming appointments.
+- Order Creation (/customer-create-order/): A modern frontend interface where customers group their laundry into "Loads" (max 7kg per load). They can attach specific add-ons (Fabricon, Detergent) to specific loads. This submits a JSON payload to the backend to create a DROP_OFF or DELIVERY order.
+
+### 4.2 Employee (Shop Operations) Workflow
+- Dashboard: Shows live shop queue (AT_SHOP, PROCESSING, READY_FOR_DELIVERY). Employees can view their active walk-in orders vs shared processing queues.
+- POS System (/pos/): 
+  - Central interface for walking-in customers or converting PENDING appointments into active orders. 
+  - Features an API endpoint (/pos/api/customers/) to look up registered customers dynamically, or allows entering a manual walkin_name.
+  - Automatically generates the QR receipt, assigns the PROCESSING status, and logs the employee's processing count.
+- Status Updates: Employees progress orders through shop states. If they progress an unassigned order, ownership is assigned to them. They are restricted from setting Rider-specific statuses.
+
+### 4.3 Rider (Logistics) Workflow
+- Dashboard: Distinct sections for available jobs, accepted pickups, and deliveries.
+- Order Claiming: 
+  - Riders see PENDING_ACCEPTANCE orders. Once they click update status to RIDER_ACCEPTED, the order is strictly assigned to them.
+  - They update status to PICKED_UP upon collecting items.
+  - They can also claim READY_FOR_DELIVERY jobs that lack a rider, progressing them to OUT_FOR_DELIVERY and finally COMPLETED.
+
+### 4.4 Administrator Workflow
+- Dashboard: High-level KPIs (Total Income, Paid/Unpaid ratio, Completed orders). Shows pending GCash payments requiring verification.
+- Analytics (/admin-analytics/): Deep dive statistics.
+  - Filters: Date, Month, Today, This Week, This Month.
+  - Advanced breakdown of revenue by payment method (Cash vs GCash) and order source (Walk-in vs Delivery).
+  - Supplies JSON aggregation data to the frontend for rendering Chart.js graphs (Revenue/Orders over time, Status distribution).
+- Queue Management (/admin-queue/): A god-view of all active operational statuses in the shop (AT_SHOP, PROCESSING, READY_FOR_DELIVERY). Designed to dodge N+1 query problems via Django's select_related and prefetch_related.
+- Payment Verification: GCash orders default to UNPAID. Admins cross-reference the payment_reference and mark the order as PAID.
+- User Management (/admin-users/): Admins can view all accounts, track staff counts, and directly add new users (Employees/Riders/Admins) bypassing the standard customer registration.
+
+---
+
+## 5. Key Architecture Features
+
+### 5.1 Security & Access Control
+- Usage of Django's @login_required decorator across the board.
+- Strict role verification within views: E.g., if request.user.role != User.RoleChoices.ADMIN: return redirect('dashboard').
+- IDOR Protection: Receipts use a randomly generated 12-char alphanumeric receipt_token preventing users from guessing URLs (e.g., /receipt/A1b2C3d4E5f6/). Employees are restricted from editing walk-in orders created by other employees.
+
+### 5.2 N+1 Query Optimization
+In heavy views like admin_queue and employee_dashboard, prefetch_related('items__service', 'items__product') and select_related('customer', 'employee', 'rider') are deeply utilized so the Django template rendering does not trigger hundreds of separate database queries during loops.
+
+### 5.3 Asynchronous Frontend Handling
+While largely Server-Side Rendered (SSR), forms like customer_create_order process complex multi-load cart logic via JavaScript and send structured JSON payloads (application/json) to the Django backend rather than relying purely on standard form boundaries.
+
+### 5.4 Unified Dashboard Redirector
+The core application handles routing via a smart redirector (/dashboard/). Depending on the user's RoleChoices, they are automatically routed to their respective domain (admin_dashboard, employee_dashboard, customer_dashboard, delivery_dashboard).
+
+---
+
+## 6. Project Setup & Utility Scripts
+- make_dev_users.py: Programmatically seeds the database with default dev accounts (gelo [superuser], admin, customer, employee, rider).
+- make_dev_items.py: Seeds the system with standard services (Wash, Dry, Fold) and products (Detergent, Fabric Conditioner, Bleach).

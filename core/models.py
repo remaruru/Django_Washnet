@@ -21,6 +21,7 @@ class User(AbstractUser):
     )
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
+    delivery_notes = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.username} - {self.get_role_display()}"
@@ -82,6 +83,10 @@ class Order(models.Model):
         APPOINTMENT = 'APPOINTMENT', _('Appointment')
         DROP_OFF = 'DROP_OFF', _('Self Drop-Off')
 
+    class ReleaseMethodChoices(models.TextChoices):
+        PICKUP = 'PICKUP', _('Customer Pickup')
+        DELIVERY = 'DELIVERY', _('Deliver to Customer')
+
     customer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='customer_orders')
     walkin_name = models.CharField(max_length=100, blank=True, null=True)
     employee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='employee_orders') # The one who created via POS
@@ -92,6 +97,11 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=20, choices=PaymentMethodChoices.choices, default=PaymentMethodChoices.CASH)
     payment_status = models.CharField(max_length=20, choices=PaymentStatusChoices.choices, default=PaymentStatusChoices.UNPAID)
     payment_reference = models.CharField(max_length=100, blank=True, null=True, help_text="e.g. GCash Ref No.")
+    
+    release_method = models.CharField(max_length=20, choices=ReleaseMethodChoices.choices, default=ReleaseMethodChoices.PICKUP)
+    delivery_address = models.TextField(blank=True, null=True)
+    delivery_contact = models.CharField(max_length=20, blank=True, null=True)
+    delivery_notes = models.TextField(blank=True, null=True)
     
     receipt_token = models.CharField(max_length=12, default=generate_receipt_token, unique=True, editable=False)
     

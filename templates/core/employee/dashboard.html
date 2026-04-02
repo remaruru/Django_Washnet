@@ -106,9 +106,23 @@
         </div>
     </div>
 
+    <!-- Employee Dashboard Navigation -->
+    <div style="display: flex; gap: var(--space-4); border-bottom: 2px solid var(--border); margin-bottom: var(--space-6); overflow-x: auto; padding-bottom: 2px;">
+        <a href="?tab=central" class="nav-tab {% if current_tab == 'central' %}active{% endif %}" style="padding: var(--space-3) var(--space-4); font-weight: 800; font-size: var(--text-sm); text-decoration: none; color: {% if current_tab == 'central' %}var(--primary){% else %}var(--text-muted){% endif %}; border-bottom: 3px solid {% if current_tab == 'central' %}var(--primary){% else %}transparent{% endif %}; white-space: nowrap; display: flex; align-items: center;">
+            <i data-feather="server" style="width: 16px; margin-right: 6px;"></i> Central Processing
+        </a>
+        <a href="?tab=walkin" class="nav-tab {% if current_tab == 'walkin' %}active{% endif %}" style="padding: var(--space-3) var(--space-4); font-weight: 800; font-size: var(--text-sm); text-decoration: none; color: {% if current_tab == 'walkin' %}var(--primary){% else %}var(--text-muted){% endif %}; border-bottom: 3px solid {% if current_tab == 'walkin' %}var(--primary){% else %}transparent{% endif %}; white-space: nowrap; display: flex; align-items: center;">
+            <i data-feather="users" style="width: 16px; margin-right: 6px;"></i> My Walk-In Orders
+        </a>
+        <a href="?tab=completed" class="nav-tab {% if current_tab == 'completed' %}active{% endif %}" style="padding: var(--space-3) var(--space-4); font-weight: 800; font-size: var(--text-sm); text-decoration: none; color: {% if current_tab == 'completed' %}var(--primary){% else %}var(--text-muted){% endif %}; border-bottom: 3px solid {% if current_tab == 'completed' %}var(--primary){% else %}transparent{% endif %}; white-space: nowrap; display: flex; align-items: center;">
+            <i data-feather="archive" style="width: 16px; margin-right: 6px;"></i> Completed History
+        </a>
+    </div>
+
     <!-- ==========================================
          SECTION 1: CENTRAL PROCESSING QUEUE (SHARED)
          ========================================== -->
+    {% if current_tab == 'central' %}
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6);">
         <h2 style="font-size: var(--text-xl); font-weight: 900; color: var(--text-main); display: flex; align-items: center; gap: var(--space-3); margin: 0; font-family: 'Nunito', sans-serif;">
             <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--secondary); box-shadow: 0 0 10px rgba(16,185,129,0.8); display: inline-block;"></span>
@@ -232,8 +246,13 @@
                     <div>
                         <p style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 4px 0;">Payment Method</p>
                         <p style="font-size: 15px; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 6px;">
+                            {% if order.payment_status == 'UNPAID' %}
+                            <i data-feather="help-circle" style="width: 14px; height: 14px; color: var(--warning);"></i>
+                            <span style="color: var(--warning);">Pending Selection</span>
+                            {% else %}
                             <i data-feather="{% if order.payment_method == 'CASH' %}dollar-sign{% else %}smartphone{% endif %}" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
                             {{ order.get_payment_method_display }}
+                            {% endif %}
                         </p>
                     </div>
                     <div>
@@ -317,6 +336,65 @@
 
                 <div style="height: 1px; background: rgba(0,0,0,0.3); margin: 0;"></div>
 
+                {% if order.payment_status == 'UNPAID' %}
+                <!-- Payment Verification Control -->
+                <!-- Payment Collection Control -->
+                <div>
+                    <h3 style="font-size: 14px; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+                        <i data-feather="dollar-sign" style="width: 18px; height: 18px; color: var(--warning);"></i> Payment Verification
+                    </h3>
+
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                        <label style="flex: 1; cursor: pointer; text-align: center; border: 2px solid var(--border); border-radius: 12px; padding: 12px; transition: all 0.2s;" onclick="selectPaymentMethod('{{ order.id }}', 'CASH', this)">
+                            <div style="font-weight: 800; font-size: 15px; color: var(--text-main); display: flex; align-items: center; justify-content: center;"><i data-feather="dollar-sign" style="width: 16px; margin-right: 4px;"></i> Cash</div>
+                        </label>
+                        <label style="flex: 1; cursor: pointer; text-align: center; border: 2px solid var(--border); border-radius: 12px; padding: 12px; transition: all 0.2s;" onclick="selectPaymentMethod('{{ order.id }}', 'GCASH', this)">
+                            <div style="font-weight: 800; font-size: 15px; color: var(--text-main); display: flex; align-items: center; justify-content: center;"><i data-feather="smartphone" style="width: 16px; margin-right: 4px;"></i> GCash</div>
+                        </label>
+                    </div>
+
+                    <div id="payment-confirm-CASH-{{ order.id }}" style="display: none; margin-bottom: 16px;">
+                        <form method="POST" action="{% url 'mark_order_paid' order.id %}" style="margin: 0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="payment_method" value="CASH">
+                            <button type="submit" class="clay-btn clay-btn-secondary" style="width: 100%; border-color: var(--warning); color: var(--warning); font-weight: 800; font-size: 15px; justify-content: center;">
+                                Confirm Cash Payment Received
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div id="payment-confirm-GCASH-{{ order.id }}" style="display: none; margin-bottom: 16px;">
+                        <form method="POST" action="{% url 'mark_order_paid' order.id %}" style="margin: 0; display: flex; flex-direction: column; gap: 12px;">
+                            {% csrf_token %}
+                            <input type="hidden" name="payment_method" value="GCASH">
+                            <input type="text" name="payment_reference" class="clay-input" placeholder="Enter GCash Reference No." required style="font-weight: 800; font-size: 15px; border-color: #3B82F6; padding: 12px 16px;">
+                            <button type="submit" class="clay-btn clay-btn-primary" style="width: 100%; justify-content: center; background: linear-gradient(to right, #3B82F6, #2563EB); border-color: rgba(255,255,255,0.2); font-weight: 800; font-size: 15px; color: white;">
+                                Verify Ref & Confirm Payment
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <div>
+                    <h3 style="font-size: 14px; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+                        <i data-feather="check-circle" style="width: 18px; height: 18px; color: var(--secondary);"></i> Payment Settled
+                    </h3>
+                    <div class="clay-inset" style="padding: 16px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+                        <div style="font-size: 15px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                            <i data-feather="{% if order.payment_method == 'CASH' %}dollar-sign{% else %}smartphone{% endif %}" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+                            {{ order.get_payment_method_display }}
+                        </div>
+                        {% if order.payment_method == 'GCASH' and order.payment_reference %}
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px;">
+                            Ref: {{ order.payment_reference }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div style="height: 1px; background: rgba(0,0,0,0.3); margin: 0;"></div>
+
                 <!-- Form Status Update inside modal -->
                 <div>
                     <h3 style="font-size: 14px; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
@@ -359,11 +437,13 @@
         <p style="color: var(--text-muted); font-weight: 700; font-size: var(--text-sm);">No shared orders pending.</p>
     </div>
     {% endif %}
+    {% endif %}
 
     <!-- ==========================================
          SECTION 2: MY WALK-IN ORDERS
          ========================================== -->
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); margin-top: var(--space-8);">
+    {% if current_tab == 'walkin' %}
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); margin-top: var(--space-4);">
         <h2 style="font-size: var(--text-xl); font-weight: 900; color: var(--text-main); display: flex; align-items: center; gap: var(--space-3); margin: 0; font-family: 'Nunito', sans-serif;">
             <span style="width: 10px; height: 10px; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 10px rgba(59,130,246,0.8); display: inline-block;"></span>
             My Walk-In Orders <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; background: var(--surface); padding: 2px 8px; border-radius: 10px;">{{ my_walkin_orders|length }}</span>
@@ -461,8 +541,13 @@
                     <div>
                         <p style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 4px 0;">Payment Method</p>
                         <p style="font-size: 15px; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 6px;">
+                            {% if order.payment_status == 'UNPAID' %}
+                            <i data-feather="help-circle" style="width: 14px; height: 14px; color: var(--warning);"></i>
+                            <span style="color: var(--warning);">Pending Selection</span>
+                            {% else %}
                             <i data-feather="{% if order.payment_method == 'CASH' %}dollar-sign{% else %}smartphone{% endif %}" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
                             {{ order.get_payment_method_display }}
+                            {% endif %}
                         </p>
                     </div>
                     <div>
@@ -548,11 +633,94 @@
 
                 <div style="height: 1px; background: rgba(0,0,0,0.3); margin: 0;"></div>
 
+                {% if order.payment_status == 'UNPAID' %}
+                <!-- Payment Collection Control -->
+                <div>
+                    <h3 style="font-size: 14px; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+                        <i data-feather="dollar-sign" style="width: 18px; height: 18px; color: var(--warning);"></i> Payment Verification
+                    </h3>
+
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                        <label style="flex: 1; cursor: pointer; text-align: center; border: 2px solid var(--border); border-radius: 12px; padding: 12px; transition: all 0.2s;" onclick="selectPaymentMethod('{{ order.id }}', 'CASH', this)">
+                            <div style="font-weight: 800; font-size: 15px; color: var(--text-main); display: flex; align-items: center; justify-content: center;"><i data-feather="dollar-sign" style="width: 16px; margin-right: 4px;"></i> Cash</div>
+                        </label>
+                        <label style="flex: 1; cursor: pointer; text-align: center; border: 2px solid var(--border); border-radius: 12px; padding: 12px; transition: all 0.2s;" onclick="selectPaymentMethod('{{ order.id }}', 'GCASH', this)">
+                            <div style="font-weight: 800; font-size: 15px; color: var(--text-main); display: flex; align-items: center; justify-content: center;"><i data-feather="smartphone" style="width: 16px; margin-right: 4px;"></i> GCash</div>
+                        </label>
+                    </div>
+
+                    <div id="payment-confirm-CASH-{{ order.id }}" style="display: none; margin-bottom: 16px;">
+                        <form method="POST" action="{% url 'mark_order_paid' order.id %}" style="margin: 0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="payment_method" value="CASH">
+                            <button type="submit" class="clay-btn clay-btn-secondary" style="width: 100%; border-color: var(--warning); color: var(--warning); font-weight: 800; font-size: 15px; justify-content: center;">
+                                Confirm Cash Payment Received
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div id="payment-confirm-GCASH-{{ order.id }}" style="display: none; margin-bottom: 16px;">
+                        <form method="POST" action="{% url 'mark_order_paid' order.id %}" style="margin: 0; display: flex; flex-direction: column; gap: 12px;">
+                            {% csrf_token %}
+                            <input type="hidden" name="payment_method" value="GCASH">
+                            <input type="text" name="payment_reference" class="clay-input" placeholder="Enter GCash Reference No." required style="font-weight: 800; font-size: 15px; border-color: #3B82F6; padding: 12px 16px;">
+                            <button type="submit" class="clay-btn clay-btn-primary" style="width: 100%; justify-content: center; background: linear-gradient(to right, #3B82F6, #2563EB); border-color: rgba(255,255,255,0.2); font-weight: 800; font-size: 15px; color: white;">
+                                Verify Ref & Confirm Payment
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <div>
+                    <h3 style="font-size: 14px; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+                        <i data-feather="check-circle" style="width: 18px; height: 18px; color: var(--secondary);"></i> Payment Settled
+                    </h3>
+                    <div class="clay-inset" style="padding: 16px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+                        <div style="font-size: 15px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                            <i data-feather="{% if order.payment_method == 'CASH' %}dollar-sign{% else %}smartphone{% endif %}" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+                            {{ order.get_payment_method_display }}
+                        </div>
+                        {% if order.payment_method == 'GCASH' and order.payment_reference %}
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px;">
+                            Ref: {{ order.payment_reference }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div style="height: 1px; background: rgba(0,0,0,0.3); margin: 0;"></div>
+
                 <!-- 5. Form Status Update inside modal -->
                 <div>
                     <h3 style="font-size: 14px; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
                         <i data-feather="settings" style="width: 18px; height: 18px; color: var(--text-muted);"></i> Order Status Control
                     </h3>
+
+                    {% if order.release_method == 'DELIVERY' %}
+                    <div style="background: rgba(59,130,246,0.05); border-left: 4px solid #3B82F6; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px;">
+                        <p style="font-size: 12px; font-weight: 900; color: #1D4ED8; text-transform: uppercase; margin: 0 0 4px 0;"><i data-feather="truck" style="width: 14px; height: 14px; margin-right: 4px; margin-top: -2px;"></i> Delivery Instructions</p>
+                        <p style="font-size: 14px; font-weight: 800; color: var(--text-main); margin: 0 0 2px 0;">{{ order.delivery_address|default:"No address pinned" }}</p>
+                        <p style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 0;">{{ order.delivery_contact|default:"No contact" }} {% if order.delivery_notes %} • {{ order.delivery_notes }}{% endif %}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if order.release_method == 'DELIVERY' and order.status == 'PROCESSING' %}
+                    <form method="POST" action="{% url 'update_order_status' order.id %}" style="margin: 0;" id="statusForm_walkin_{{ order.id }}">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="READY_FOR_DELIVERY">
+                        <button type="submit" class="clay-btn clay-btn-primary" style="width: 100%; border-radius: 12px; padding: 16px; justify-content: center; background: linear-gradient(135deg, #3B82F6, #1D4ED8); border: none;">
+                            <i data-feather="send" style="width: 18px; margin-right: 8px; color: white;"></i> Send to Rider Queue
+                        </button>
+                    </form>
+                    {% elif order.release_method == 'DELIVERY' and order.status == 'READY_FOR_DELIVERY' and not order.rider %}
+                    <div style="background: #eff6ff; border: 2px dashed #93c5fd; border-radius: 12px; padding: 16px; text-align: center;">
+                        <i data-feather="truck" style="width: 24px; height: 24px; color: #3b82f6; margin-bottom: 8px;"></i>
+                        <p style="font-size: 14px; font-weight: 800; color: #1d4ed8; margin: 0 0 4px 0;">Awaiting Rider Pickup</p>
+                        <p style="font-size: 13px; font-weight: 700; color: #64748b; margin: 0;">Broadcasted to local fleet correctly.</p>
+                    </div>
+                    <form style="display: none;" id="statusForm_walkin_{{ order.id }}"></form>
+                    {% else %}
                     <form method="POST" action="{% url 'update_order_status' order.id %}" style="display: flex; flex-direction: column; gap: 8px; margin: 0;" id="statusForm_walkin_{{ order.id }}">
                         {% csrf_token %}
                         <div style="position: relative;">
@@ -568,6 +736,7 @@
                             </div>
                         </div>
                     </form>
+                    {% endif %}
                 </div>
                 
             </div>
@@ -578,12 +747,19 @@
                 <a href="{% url 'order_receipt' order.receipt_token %}" target="_blank" class="clay-btn clay-btn-ghost" style="padding: 12px 24px; font-weight: 800; font-size: 15px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; background: #ffffff;">
                     <i data-feather="printer" style="width: 18px; height: 18px;"></i> Print Receipt
                 </a>
+                {% if order.release_method == 'DELIVERY' and order.status == 'PROCESSING' %}
+                    <!-- hidden -->
+                {% elif order.release_method == 'DELIVERY' and order.status == 'READY_FOR_DELIVERY' and not order.rider %}
+                    <!-- hidden -->
+                {% else %}
                 <button type="button" onclick="document.getElementById('statusForm_walkin_{{ order.id }}').submit()" class="clay-btn clay-btn-primary" style="padding: 12px 32px; font-weight: 800; font-size: 15px;">Update Status</button>
+                {% endif %}
             </div>
         </div>
     </div>
     {% endfor %}
     {% endfor %}
+    {% endif %}
 
     <!-- JS for Modals -->
     <script>
@@ -609,6 +785,22 @@
             }
         }
 
+        function selectPaymentMethod(orderId, method, el) {
+            // Reset borders
+            const parent = el.parentElement;
+            Array.from(parent.children).forEach(child => {
+                child.style.borderColor = 'var(--border)';
+                child.style.background = 'transparent';
+            });
+            // Highlight selected
+            el.style.borderColor = method === 'CASH' ? 'var(--warning)' : '#3B82F6';
+            el.style.background = method === 'CASH' ? 'rgba(245, 158, 11, 0.05)' : 'rgba(59, 130, 246, 0.05)';
+            
+            // Toggle forms
+            document.getElementById(`payment-confirm-CASH-${orderId}`).style.display = method === 'CASH' ? 'block' : 'none';
+            document.getElementById(`payment-confirm-GCASH-${orderId}`).style.display = method === 'GCASH' ? 'block' : 'none';
+        }
+
         // Close when clicking outside of modal card
         window.addEventListener('click', function(event) {
             if (event.target.id && (event.target.id.startsWith('modal_walkin_') || event.target.id.startsWith('modal_shared_'))) {
@@ -620,7 +812,8 @@
     <!-- ==========================================
          SECTION 3: COMPLETED ORDERS
          ========================================== -->
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); margin-top: var(--space-8); padding-top: var(--space-8); border-top: 2px dashed var(--border);">
+    {% if current_tab == 'completed' %}
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); margin-top: var(--space-4);">
         <h2 style="font-size: var(--text-lg); font-weight: 800; color: var(--text-muted); display: flex; align-items: center; gap: var(--space-3); margin: 0; font-family: 'Nunito', sans-serif;">
             <i data-feather="archive" style="width: 18px; height: 18px;"></i>
             Recently Completed <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; background: var(--surface); padding: 2px 8px; border-radius: 10px;">{{ completed_orders|length }}</span>
@@ -646,6 +839,7 @@
     </div>
     {% else %}
     <p style="color: var(--text-muted); font-size: var(--text-sm); font-weight: 600;">No recently completed orders yet.</p>
+    {% endif %}
     {% endif %}
 
 </div>

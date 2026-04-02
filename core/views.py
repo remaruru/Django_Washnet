@@ -242,7 +242,7 @@ def admin_analytics(request):
     # Also collect status breakdown
     status_counts = list(orders.values('status').annotate(count=Count('id')).order_by('-count'))
     status_labels = dict(Order.StatusChoices.choices)
-    status_chart_data = [{'label': status_labels.get(item['status'], item['status']), 'count': item['count']} for item in status_counts]
+    status_chart_data = [{'label': str(status_labels.get(item['status'], item['status'])), 'count': item['count']} for item in status_counts]
 
     context = {
         'selected_filter': selected_filter,
@@ -419,63 +419,70 @@ def employee_dashboard(request):
     
     total_processed = profile.orders_processed if profile else 0
     
-    # Active Shared Processing Queue
-    shared_active_orders = Order.objects.prefetch_related('items__service', 'items__product').filter(
-        order_type__in=[Order.OrderTypeChoices.DELIVERY, Order.OrderTypeChoices.APPOINTMENT, Order.OrderTypeChoices.DROP_OFF]
-    ).exclude(
-        status__in=[Order.StatusChoices.COMPLETED, Order.StatusChoices.CANCELLED]
-    ).order_by('created_at')
+    # Routing Tab
+    tab = request.GET.get('tab', 'central')
+    valid_tabs = ['central', 'walkin', 'completed']
+    if tab not in valid_tabs:
+        tab = 'central'
+
+    # Initialize empty vars
+    shared_active_orders = []
+    my_walkin_orders = []
+    walkin_groups = []
+    completed_orders = []
+    pickup_appointments = []
+    total_active_queue = 0
     
-    # My Active Walk-in Orders (Used for metrics, excludes COMPLETED/CANCELLED)
-    my_walkin_orders = Order.objects.prefetch_related('items__service', 'items__product').filter(
-        order_type=Order.OrderTypeChoices.WALK_IN,
-        employee=request.user
-    ).exclude(
-        status__in=[Order.StatusChoices.COMPLETED, Order.StatusChoices.CANCELLED]
-    ).order_by('created_at')
-    
-    # My Completed Walk-in Orders
-    my_completed_walkin_orders = Order.objects.prefetch_related('items__service', 'items__product').filter(
-        order_type=Order.OrderTypeChoices.WALK_IN,
-        employee=request.user,
-        status=Order.StatusChoices.COMPLETED
-    ).order_by('-updated_at')[:20]
-    
-    # Bundle Walk-In Groups dynamically for Dashboard Rendering
-    walkin_groups = [
-        {'title': 'At Shop', 'icon': 'home', 'orders': []},
-        {'title': 'Processing', 'icon': 'loader', 'orders': []},
-        {'title': 'Ready for Pickup / Delivery', 'icon': 'package', 'orders': []},
-        {'title': 'Completed', 'icon': 'check-circle', 'orders': []}
-    ]
-    
-    for order in my_walkin_orders:
-        if order.status in [Order.StatusChoices.AT_SHOP, Order.StatusChoices.PENDING_ACCEPTANCE, Order.StatusChoices.EXPECTING_DROP_OFF, Order.StatusChoices.RIDER_ACCEPTED, Order.StatusChoices.PICKED_UP]:
-            walkin_groups[0]['orders'].append(order)
-        elif order.status == Order.StatusChoices.PROCESSING:
-            walkin_groups[1]['orders'].append(order)
-        elif order.status in [Order.StatusChoices.READY_FOR_DELIVERY, Order.StatusChoices.OUT_FOR_DELIVERY]:
-            walkin_groups[2]['orders'].append(order)
+    if tab == 'central':
+        shared_active_orders = Order.objects.prefetch_related('items__service', 'items__product').filter(
+            order_type__in=[Order.OrderTypeChoices.DELIVERY, Order.OrderTypeChoices.APPOINTMENT, Order.OrderTypeChoices.DROP_OFF]
+        ).exclude(
+            status__in=[Order.StatusChoices.COMPLETED, Order.StatusChoices.CANCELLED]
+        ).order_by('created_at')
+        total_active_queue = shared_active_orders.count()
+        
+    elif tab == 'walkin':
+        my_walkin_orders = Order.objects.prefetch_related('items__service', 'items__product').filter(
+            order_type=Order.OrderTypeChoices.WALK_IN,
+            employee=request.user
+        ).exclude(
+            status__in=[Order.StatusChoices.COMPLETED, Order.StatusChoices.CANCELLED]
+        ).order_by('created_at')
+        
+        my_completed_walkin_orders = Order.objects.prefetch_related('items__service', 'items__product').filter(
+            order_type=Order.OrderTypeChoices.WALK_IN,
+            employee=request.user,
+            status=Order.StatusChoices.COMPLETED
+        ).order_by('-updated_at')[:20]
+        
+        walkin_groups = [
+            {'title': 'At Shop', 'icon': 'home', 'orders': []},
+            {'title': 'Processing', 'icon': 'loader', 'orders': []},
+            {'title': 'Ready for Pickup / Delivery', 'icon': 'package', 'orders': []},
+            {'title': 'Completed', 'icon': 'check-circle', 'orders': []}
+        ]
+        for order in my_walkin_orders:
+            if order.status in [Order.StatusChoices.AT_SHOP, Order.StatusChoices.PENDING_ACCEPTANCE, Order.StatusChoices.EXPECTING_DROP_OFF, Order.StatusChoices.RIDER_ACCEPTED, Order.StatusChoices.PICKED_UP]:
+                walkin_groups[0]['orders'].append(order)
+            elif order.status == Order.StatusChoices.PROCESSING:
+                walkin_groups[1]['orders'].append(order)
+            elif order.status in [Order.StatusChoices.READY_FOR_DELIVERY, Order.StatusChoices.OUT_FOR_DELIVERY]:
+                walkin_groups[2]['orders'].append(order)
+                
+        for order in my_completed_walkin_orders:
+            walkin_groups[3]['orders'].append(order)
             
-    for order in my_completed_walkin_orders:
-        walkin_groups[3]['orders'].append(order)
-    
-    # Shared Completed Orders (Excludes WALK_IN)
-    completed_orders = Order.objects.prefetch_related('items__service', 'items__product').filter(
-        order_type__in=[Order.OrderTypeChoices.DELIVERY, Order.OrderTypeChoices.APPOINTMENT, Order.OrderTypeChoices.DROP_OFF]
-    ).filter(
-        status__in=[Order.StatusChoices.COMPLETED, Order.StatusChoices.CANCELLED]
-    ).order_by('-updated_at')[:30]
-    
-    pickup_appointments = Appointment.objects.filter(
-        status=Appointment.StatusChoices.PENDING,
-        appointment_type=Appointment.TypeChoices.PICKUP
-    ).order_by('appointment_date')
-    
-    # We still calculate total active queue length for the metric
-    total_active_queue = shared_active_orders.count() + my_walkin_orders.count()
-    
+        total_active_queue = my_walkin_orders.count()
+
+    elif tab == 'completed':
+        completed_orders = Order.objects.prefetch_related('items__service', 'items__product').filter(
+            order_type__in=[Order.OrderTypeChoices.DELIVERY, Order.OrderTypeChoices.APPOINTMENT, Order.OrderTypeChoices.DROP_OFF]
+        ).filter(
+            status__in=[Order.StatusChoices.COMPLETED, Order.StatusChoices.CANCELLED]
+        ).order_by('-updated_at')[:30]
+        
     context = {
+        'current_tab': tab,
         'orders_processed_today': orders_processed_today,
         'total_processed': total_processed,
         'shared_active_orders': shared_active_orders,
@@ -503,6 +510,69 @@ def verify_gcash_payment(request, order_id):
         messages.error(request, 'This order is not eligible for GCash verification.')
         
     return redirect('admin_dashboard')
+
+@login_required
+def mark_order_paid(request, order_id):
+    if request.user.role not in [User.RoleChoices.ADMIN, User.RoleChoices.EMPLOYEE, User.RoleChoices.RIDER]:
+        return redirect('dashboard')
+        
+    order = get_object_or_404(Order, id=order_id)
+    
+    # Strictly enforce rider assignment checks
+    if request.user.role == User.RoleChoices.RIDER:
+        if order.rider != request.user:
+            messages.error(request, 'You cannot confirm payment for an order not assigned to you.')
+            return redirect('delivery_dashboard')
+        if order.status not in [Order.StatusChoices.READY_FOR_DELIVERY, Order.StatusChoices.OUT_FOR_DELIVERY]:
+            messages.error(request, 'You can only confirm payment for orders in delivery status.')
+            return redirect('delivery_dashboard')
+            
+    if request.method == 'POST':
+        if order.payment_status != Order.PaymentStatusChoices.UNPAID:
+            messages.warning(request, f'Order #{order.id} is already paid.')
+        else:
+            if 'payment_method' in request.POST:
+                order.payment_method = request.POST.get('payment_method')
+
+            if order.payment_method == Order.PaymentMethodChoices.GCASH:
+                ref_num = request.POST.get('payment_reference')
+                if not ref_num or not ref_num.strip():
+                    messages.error(request, 'A valid GCash Reference Number is required.')
+                    referer = request.META.get('HTTP_REFERER')
+                    return redirect(referer if referer else 'home')
+                order.payment_reference = ref_num.strip()
+                
+            order.payment_status = Order.PaymentStatusChoices.PAID
+            order.save()
+            messages.success(request, f'Order #{order.id} successfully marked as PAID.')
+    else:
+        # Prevent direct GET blind confirmation? Let's allow GET for Cash ONLY for backwards compatibility if needed, but best is strictly POST.
+        # But wait, original used GET. We will allow POST to handle forms, and GET for quick buttons if needed, but the plan says strict form.
+        # Actually, let's just make both use POST via forms in the HTML, or allow GET for CASH, but PREVENT GET for GCASH.
+        if order.payment_status != Order.PaymentStatusChoices.UNPAID:
+            messages.warning(request, f'Order #{order.id} is already paid.')
+        elif order.payment_method == Order.PaymentMethodChoices.GCASH:
+            is_walkin = (order.order_type == Order.OrderTypeChoices.WALK_IN)
+            if not is_walkin:
+                messages.error(request, 'GCash payments require manual verification with a reference number. Please use the verification form.')
+            else:
+                order.payment_status = Order.PaymentStatusChoices.PAID
+                order.save()
+                messages.success(request, f'Order #{order.id} successfully marked as PAID.')
+        else:
+            order.payment_status = Order.PaymentStatusChoices.PAID
+            order.save()
+            messages.success(request, f'Order #{order.id} successfully marked as PAID.')
+            
+    if request.user.role == User.RoleChoices.RIDER:
+        return redirect('delivery_dashboard')
+    elif request.user.role == User.RoleChoices.EMPLOYEE:
+        return redirect('employee_dashboard')
+    else:
+        referer = request.META.get('HTTP_REFERER')
+        if referer:
+            return redirect(referer)
+        return redirect('admin_dashboard')
 
 # --- EMPLOYEE ACTIONS ---
 @login_required
@@ -544,8 +614,17 @@ def update_order_status(request, order_id):
                 ]
                 if new_status in invalid_rider_statuses:
                     messages.error(request, 'Riders cannot set shop processing statuses.')
-                    return redirect('delivery_dashboard')
-                    
+            if 'payment_method' in request.POST:
+                order.payment_method = request.POST.get('payment_method')
+                if order.payment_method == Order.PaymentMethodChoices.GCASH:
+                    ref_num = request.POST.get('payment_reference')
+                    if not ref_num or not ref_num.strip():
+                        messages.error(request, 'A valid GCash Reference Number is required for this action.')
+                        referer = request.META.get('HTTP_REFERER')
+                        return redirect(referer if referer else 'delivery_dashboard')
+                    order.payment_reference = ref_num.strip()
+                order.payment_status = Order.PaymentStatusChoices.PAID
+                
             order.status = new_status
             
             # Claim unassigned shared orders when an employee progresses them
@@ -571,6 +650,33 @@ from django.http import JsonResponse # type: ignore
 from django.db.models import Q # type: ignore
 
 @login_required
+def customer_profile(request):
+    if request.user.role != User.RoleChoices.CUSTOMER:
+        return redirect('dashboard')
+        
+    if request.method == 'POST':
+        phone = request.POST.get('phone_number', '').strip()
+        address = request.POST.get('address', '').strip()
+        notes = request.POST.get('delivery_notes', '').strip()
+        
+        # Delivery Address required if attempting to save
+        if not address:
+            messages.error(request, 'Delivery Address cannot be blank.')
+        else:
+            user = request.user
+            user.phone_number = phone
+            user.address = address
+            user.delivery_notes = notes
+            user.save()
+            messages.success(request, 'Your delivery profile has been updated.')
+            
+        return redirect('customer_profile')
+        
+    return render(request, 'core/customer/profile.html', {
+        'user': request.user
+    })
+
+@login_required
 def employee_pos_customer_api(request):
     if request.user.role not in [User.RoleChoices.EMPLOYEE, User.RoleChoices.ADMIN]:
         return JsonResponse({'error': 'Unauthorized'}, status=403)
@@ -586,13 +692,16 @@ def employee_pos_customer_api(request):
         Q(username__icontains=query) | 
         Q(first_name__icontains=query) | 
         Q(last_name__icontains=query)
-    ).values('id', 'username', 'first_name', 'last_name')[:10]
+    ).values('id', 'username', 'first_name', 'last_name', 'address', 'phone_number', 'delivery_notes')[:10]
     
     results = [
         {
             'id': c['id'],
             'username': c['username'],
-            'full_name': f"{c['first_name']} {c['last_name']}".strip() or c['username']
+            'full_name': f"{c['first_name']} {c['last_name']}".strip() or c['username'],
+            'address': c['address'] or '',
+            'phone_number': c['phone_number'] or '',
+            'delivery_notes': c['delivery_notes'] or ''
         }
         for c in customers
     ]
@@ -610,6 +719,11 @@ def employee_pos(request):
         payment_method = request.POST.get('payment_method')
         payment_reference = request.POST.get('payment_reference')
         order_data_str = request.POST.get('order_data')
+        
+        release_method = request.POST.get('release_method', Order.ReleaseMethodChoices.PICKUP)
+        delivery_address = request.POST.get('delivery_address', '')
+        delivery_contact = request.POST.get('delivery_contact', '')
+        delivery_notes = request.POST.get('delivery_notes', '')
         
         if payment_method == 'GCASH' and not payment_reference:
             messages.error(request, 'GCash payments require a reference number.')
@@ -637,6 +751,25 @@ def employee_pos(request):
                 
         total = sum(item['total'] for item in cart)
         
+        # If Delivery, enforce smart backend fallback for Registered Customers
+        if release_method == 'DELIVERY' and customer:
+            if not delivery_address.strip() and customer.address:
+                delivery_address = customer.address
+            if not delivery_contact.strip() and customer.phone_number:
+                delivery_contact = customer.phone_number
+            if not delivery_notes.strip() and customer.delivery_notes:
+                delivery_notes = customer.delivery_notes
+                
+            # If after fallback it's still missing, we reject the request
+            if not delivery_address.strip() or not delivery_contact.strip():
+                messages.error(request, 'Missing delivery address or contact for this registered customer.')
+                return redirect('employee_pos')
+        elif release_method == 'DELIVERY' and not customer:
+            # Walk-in requires manual input
+            if not delivery_address.strip() or not delivery_contact.strip():
+                messages.error(request, 'Walk-in deliveries require manual entry of Address and Contact.')
+                return redirect('employee_pos')
+        
         # If Rider, map them. If Employee, map them.
         is_rider = request.user.role == User.RoleChoices.RIDER
         
@@ -655,7 +788,11 @@ def employee_pos(request):
             payment_status=Order.PaymentStatusChoices.PAID if payment_method == 'CASH' else Order.PaymentStatusChoices.UNPAID,
             payment_reference=payment_reference if payment_method == 'GCASH' else None,
             total_amount=total,
-            order_type=assigned_order_type
+            order_type=assigned_order_type,
+            release_method=release_method,
+            delivery_address=delivery_address,
+            delivery_contact=delivery_contact,
+            delivery_notes=delivery_notes
         )
         
         if appointment_id:
@@ -945,11 +1082,13 @@ def delivery_dashboard(request):
         rider=request.user
     ).order_by('-updated_at')
     
-    # Available Deliveries (Ready for Delivery but no rider claimed it yet, and must be DELIVERY type)
+    # Available Deliveries (Ready for Delivery but no rider claimed it yet)
     available_deliveries = Order.objects.filter(
         status=Order.StatusChoices.READY_FOR_DELIVERY,
-        order_type=Order.OrderTypeChoices.DELIVERY,
         rider__isnull=True
+    ).filter(
+        Q(order_type=Order.OrderTypeChoices.DELIVERY) | 
+        Q(release_method=Order.ReleaseMethodChoices.DELIVERY)
     ).order_by('updated_at')
     
     context = {
