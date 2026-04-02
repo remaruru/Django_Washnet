@@ -955,9 +955,41 @@
 
     // Cart Management Core
     function removeItem(index) {
-        // If the item requested for removal is a base Service, we should ideally remove its attached addons. 
-        // For simplicity, removing anything natively drops it from array.
-        cart.splice(index, 1);
+        const targetItem = cart[index];
+        
+        if (targetItem.item_type === 'SERVICE') {
+            // 1. Identify the target load grouping ID
+            const targetLoadId = targetItem.load_index;
+            
+            // 2. Remove base service AND all bundled addons with matching load_index
+            cart = cart.filter(item => item.load_index !== targetLoadId);
+            
+            // 3. Re-index all remaining loads linearly from 1 to N
+            let uniqueLoadIds = [...new Set(cart.filter(item => item.load_index !== null).map(item => item.load_index))].sort((a,b) => a - b);
+            let idMapping = {};
+            uniqueLoadIds.forEach((oldId, i) => {
+                 idMapping[oldId] = i + 1;
+            });
+            
+            cart.forEach(item => {
+                if (item.load_index !== null) {
+                    item.load_index = idMapping[item.load_index];
+                    // Optionally update text descriptions if present
+                    if (item.item_type === 'SERVICE') {
+                        item.desc = `Machine Load ${item.load_index}`;
+                    } else if (item.item_type === 'ADDON') {
+                        item.desc = `Add-on bound to Load ${item.load_index}`;
+                    }
+                }
+            });
+            
+            // 4. Reset counter so the next added load follows cleanly sequentially
+            globalLoadGroupCounter = uniqueLoadIds.length;
+        } else {
+            // Remove a single Retail Product or targeted singular Add-on
+            cart.splice(index, 1);
+        }
+        
         renderCart();
     }
 
@@ -1009,8 +1041,8 @@
                         </p>
                     </div>
                     
-                    <button type="button" onclick="removeItem(${index})" class="absolute right-0 top-0 bottom-0 w-8 bg-error/10 text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border-l border-error/5" title="Remove">
-                        <i data-feather="x" style="width: 14px; height: 14px; stroke-width: 3px;"></i>
+                    <button type="button" onclick="removeItem(${index})" class="absolute right-2 top-2 w-6 h-6 rounded-md text-muted hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-colors shadow-sm bg-surface border border-border" title="Remove Item">
+                        <i data-feather="x" style="width: 12px; height: 12px; stroke-width: 3px;"></i>
                     </button>
                 </div>
             `);
