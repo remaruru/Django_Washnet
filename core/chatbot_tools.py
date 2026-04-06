@@ -124,10 +124,19 @@ def estimate_price(service_name: str, quantity_kg: float) -> dict:
     except (ValueError, TypeError):
         return {"error": "Invalid quantity. Please provide a number (e.g. 3.5 for 3.5kg)."}
 
-    # Case-insensitive partial match
-    service = Service.objects.filter(name__icontains=service_name, is_active=True).first()
-    if not service:
-        active_services = list(Service.objects.filter(is_active=True).values("name", "price"))
+    import re
+    clean_search = re.sub(r'[^a-z0-9]', '', service_name.lower())
+
+    matched_service = None
+    all_active = Service.objects.filter(is_active=True)
+    for svc in all_active:
+        clean_name = re.sub(r'[^a-z0-9]', '', svc.name.lower())
+        if clean_search in clean_name or clean_name in clean_search:
+            matched_service = svc
+            break
+
+    if not matched_service:
+        active_services = list(all_active.values("name", "price"))
         # Clean up Decimal values for JSON serialization
         for svc in active_services:
             svc["price"] = float(svc["price"])
@@ -137,10 +146,10 @@ def estimate_price(service_name: str, quantity_kg: float) -> dict:
             "available_services": active_services,
         }
 
-    unit_price = float(service.price)
+    unit_price = float(matched_service.price)
     total = unit_price * qty
     return {
-        "service": service.name,
+        "service": matched_service.name,
         "unit_price": unit_price,
         "quantity_kg": qty,
         "estimated_total": round(total, 2),
