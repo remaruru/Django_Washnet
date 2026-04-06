@@ -189,13 +189,13 @@
                     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px;">
                         <div>
                             <label class="form-label" style="font-weight: 800; font-size: 12px; margin-bottom: 4px;">Service</label>
-                            <select class="clay-input service-select" style="font-weight: 700; font-size: 13px; padding: 8px;" required onchange="calculateTotal()">
+                            <select class="clay-input service-select" style="font-weight: 700; font-size: 13px; padding: 8px;" onchange="calculateTotal()">
                                 ${optionsHtml}
                             </select>
                         </div>
                         <div>
                             <label class="form-label" style="font-weight: 800; font-size: 12px; margin-bottom: 4px;">Weight (kg)</label>
-                            <input type="number" class="clay-input weight-input" style="font-weight: 800; font-size: 13px; padding: 8px;" required min="0.1" step="0.1" max="7" placeholder="Max 7kg" oninput="calculateTotal()">
+                            <input type="number" class="clay-input weight-input" style="font-weight: 800; font-size: 13px; padding: 8px;" min="0.1" step="0.1" max="7" placeholder="Max 7kg" oninput="calculateTotal()">
                         </div>
                     </div>
                     
@@ -216,18 +216,18 @@
                         <i data-feather="plus-circle" style="width: 12px; color: var(--primary);"></i> Add-ons <span style="font-size: 10px; font-weight: 500; color: var(--text-muted);">(Optional)</span>
                     </label>
                     <div style="display: flex; flex-direction: column; gap: 6px;">
-                        <label style="display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; pointer-events: auto;">
                             <span style="font-weight: 800; color: var(--text-main);">Fabricon <span style="color:var(--text-muted); font-size:10px;">(₱15)</span></span>
                             <div style="display: flex; align-items: center; gap: 4px;">
                                 <input type="number" class="fabricon-qty clay-input" style="width: 50px; padding: 4px; text-align: center; font-weight: 800; font-size: 12px;" min="0" value="0" oninput="calculateTotal()">
                             </div>
-                        </label>
-                        <label style="display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; pointer-events: auto;">
                             <span style="font-weight: 800; color: var(--text-main);">Premium Det. <span style="color:var(--text-muted); font-size:10px;">(₱15)</span></span>
                             <div style="display: flex; align-items: center; gap: 4px;">
                                 <input type="number" class="detergent-qty clay-input" style="width: 50px; padding: 4px; text-align: center; font-weight: 800; font-size: 12px;" min="0" value="0" oninput="calculateTotal()">
                             </div>
-                        </label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -247,10 +247,8 @@
         const input = document.getElementById('pickupDatetime');
         if (method === 'PICKUP') {
             container.style.display = 'block';
-            input.required = true;
         } else {
             container.style.display = 'none';
-            input.required = false;
             input.value = '';
         }
     }
@@ -259,28 +257,36 @@
         e.preventDefault();
 
         const btn = document.getElementById('submitBtn');
+        const originalBtnHTML = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i data-feather="loader" class="animate-spin" style="width: 20px; height: 20px; margin-right: 8px; display: inline-block;"></i> Processing...';
         if (typeof feather !== 'undefined') feather.replace();
 
         const loads = [];
         let isValid = true;
+        let missingWeight = false;
+
         document.querySelectorAll('.load-block').forEach(block => {
             const weightInput = block.querySelector('.weight-input');
+            const serviceSelect = block.querySelector('.service-select');
+            
             const fabriconQty = parseInt(block.querySelector('.fabricon-qty').value) || 0;
             const detergentQty = parseInt(block.querySelector('.detergent-qty').value) || 0;
-            
-            const weight = parseFloat(weightInput?.value) || 0;
+            const weight = parseFloat(weightInput?.value);
             const numLoads = 1;
+
+            if (!weight || weight <= 0) {
+                missingWeight = true;
+            }
 
             if (weight > 7) {
                 isValid = false;
             }
 
             loads.push({
-                service_id: block.querySelector('.service-select').value,
+                service_id: serviceSelect.value,
                 num_loads: numLoads,
-                weight: weight,
+                weight: weight || 0,
                 fabricon: fabriconQty > 0,
                 fabricon_qty: fabriconQty,
                 detergent: detergentQty > 0,
@@ -289,10 +295,18 @@
             });
         });
 
+        if (missingWeight) {
+            alert("Please enter a valid weight (kg) for all loads before confirming.");
+            btn.disabled = false;
+            btn.innerHTML = originalBtnHTML;
+            if (typeof feather !== 'undefined') feather.replace();
+            return;
+        }
+
         if (!isValid) {
             alert("One or more loads exceed the maximum 7kg limit per load. Please add another load.");
             btn.disabled = false;
-            btn.innerHTML = 'Confirm Order <i data-feather="arrow-right" style="margin-left: 8px;"></i>';
+            btn.innerHTML = originalBtnHTML;
             if (typeof feather !== 'undefined') feather.replace();
             return;
         }
@@ -303,7 +317,7 @@
         if (deliveryMethod === 'PICKUP' && !pickupDatetime) {
             alert("Please select a valid date and time for the rider to pick up your laundry.");
             btn.disabled = false;
-            btn.innerHTML = 'Confirm Order <i data-feather="arrow-right" style="margin-left: 8px;"></i>';
+            btn.innerHTML = originalBtnHTML;
             if (typeof feather !== 'undefined') feather.replace();
             return;
         }

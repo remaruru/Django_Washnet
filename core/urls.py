@@ -42,4 +42,7 @@ urlpatterns = [
     
     # Shared
     path('receipt/<str:receipt_token>/', views.order_receipt, name='order_receipt'),
+
+    # AI Chatbot
+    path('chatbot/', views.chatbot_api, name='chatbot_api'),
 ]

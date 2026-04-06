@@ -1174,3 +1174,222 @@ def process_appointment(request, appointment_id):
                 'appointment_id': appointment.id
             })
             return redirect(f"{base_url}?{query_string}")
+
+
+# ─────────────────────────────────────────────────────────────────
+#  AI CHATBOT API
+# ─────────────────────────────────────────────────────────────────
+from django.views.decorators.http import require_POST   # type: ignore
+from core.chatbot_tools import TOOL_REGISTRY            # type: ignore
+
+SYSTEM_PROMPTS = {
+    "ANONYMOUS": (
+        "You are Washnet's friendly public assistant. "
+        "You can only answer questions about the laundry service: store hours, pricing, delivery, "
+        "payment methods, and how to place an order. "
+        "Do not answer unrelated questions. "
+        "If asked about specific orders or staff data, politely explain that you cannot help with that here."
+    ),
+    "CUSTOMER": (
+        "You are Washnet's helpful laundry assistant for registered customers. "
+        "You can use get_my_orders to look up the customer's active orders directly without a token. "
+        "You can also track specific orders using their receipt token, estimate prices, "
+        "and answer general service questions. "
+        "Never access another customer's data. "
+        "Do not provide staff-only information like analytics or queue counts."
+    ),
+    "EMPLOYEE": (
+        "You are Washnet's concise operations assistant for staff. "
+        "You help employees with: today's queue summary, processing counts, walk-in summaries, "
+        "unpaid orders, ready-for-delivery orders, and order lookups (by token or order ID). "
+        "Be data-dense and efficient. Format numbers clearly. "
+        "Do not share business-level revenue analytics — that is admin-only."
+    ),
+    "ADMIN": (
+        "You are Washnet's business intelligence assistant for administrators. "
+        "You have access to order summaries, revenue data, payment breakdowns, and analytics. "
+        "Be concise but thorough. Format currency as ₱ with 2 decimal places. "
+        "Summarize data clearly and highlight anything that needs attention."
+    ),
+}
+
+# Gemini function declarations per role (what the model is told it can call)
+GEMINI_TOOLS = {
+    "ANONYMOUS": [
+        {"name": "faq", "description": "Answer a frequently asked question about the laundry service.", "parameters": {"type": "object", "properties": {"topic": {"type": "string", "description": "The FAQ topic (e.g. hours, delivery, payment, how_to_order, services)"}}, "required": ["topic"]}},
+        {"name": "estimate_price", "description": "Estimate the cost for a laundry service given a service name and weight in kg.", "parameters": {"type": "object", "properties": {"service_name": {"type": "string"}, "quantity_kg": {"type": "number"}}, "required": ["service_name", "quantity_kg"]}},
+        {"name": "get_all_services", "description": "Return all active services and their prices.", "parameters": {"type": "object", "properties": {}}},
+    ],
+    "CUSTOMER": [
+        {"name": "faq", "description": "Answer a frequently asked question about the laundry service.", "parameters": {"type": "object", "properties": {"topic": {"type": "string"}}, "required": ["topic"]}},
+        {"name": "estimate_price", "description": "Estimate the cost for a laundry service.", "parameters": {"type": "object", "properties": {"service_name": {"type": "string"}, "quantity_kg": {"type": "number"}}, "required": ["service_name", "quantity_kg"]}},
+        {"name": "get_all_services", "description": "Return all active services and their prices.", "parameters": {"type": "object", "properties": {}}},
+        {"name": "get_my_orders", "description": "Return all recent orders belonging to the logged-in customer.", "parameters": {"type": "object", "properties": {}}},
+        {"name": "track_order", "description": "Track an order using a receipt token only.", "parameters": {"type": "object", "properties": {"receipt_token": {"type": "string", "description": "The unique receipt token from the customer's receipt"}}, "required": ["receipt_token"]}},
+    ],
+    "EMPLOYEE": [
+        {"name": "faq", "description": "Answer a FAQ.", "parameters": {"type": "object", "properties": {"topic": {"type": "string"}}, "required": ["topic"]}},
+        {"name": "estimate_price", "description": "Estimate price.", "parameters": {"type": "object", "properties": {"service_name": {"type": "string"}, "quantity_kg": {"type": "number"}}, "required": ["service_name", "quantity_kg"]}},
+        {"name": "get_all_services", "description": "Return all active services.", "parameters": {"type": "object", "properties": {}}},
+        {"name": "get_my_orders", "description": "Return all recent orders belonging to the logged-in customer.", "parameters": {"type": "object", "properties": {}}},
+        {"name": "track_order", "description": "Track an order by receipt token.", "parameters": {"type": "object", "properties": {"receipt_token": {"type": "string"}}, "required": ["receipt_token"]}},
+        {"name": "get_today_queue", "description": "Get today's order queue counts grouped by status.", "parameters": {"type": "object", "properties": {}}},
+        {"name": "get_processing_counts", "description": "Get counts of orders currently at shop or processing.", "parameters": {"type": "object", "properties": {}}},
+        {"name": "get_walkin_summary", "description": "Get today's walk-in order summary.", "parameters": {"type": "object", "properties": {}}},
+        {"name": "lookup_order", "description": "Look up an order by receipt token or order ID (numeric).", "parameters": {"type": "object", "properties": {"identifier": {"type": "string", "description": "Receipt token or numeric order ID"}}, "required": ["identifier"]}},
+        {"name": "get_unpaid_orders", "description": "Get list of unpaid orders.", "parameters": {"type": "object", "properties": {}}},
+        {"name": "get_ready_for_delivery", "description": "Get orders ready for or out for delivery.", "parameters": {"type": "object", "properties": {}}},
+        {"name": "get_operational_counts", "description": "Get current live processing, ready, and completed counts.", "parameters": {"type": "object", "properties": {}}},
+    ],
+    "ADMIN": None,  # Populated below to include all tools
+}
+
+# Admin gets all employee tools plus extra
+GEMINI_TOOLS["ADMIN"] = GEMINI_TOOLS["EMPLOYEE"] + [
+    {"name": "get_orders_summary", "description": "Get total order counts for a period (today/week/month).", "parameters": {"type": "object", "properties": {"period": {"type": "string", "description": "today, week, or month"}}, "required": ["period"]}},
+    {"name": "get_revenue_summary", "description": "Get revenue totals for a period.", "parameters": {"type": "object", "properties": {"period": {"type": "string"}}, "required": ["period"]}},
+    {"name": "get_payment_breakdown", "description": "Get Cash vs GCash vs PayPal breakdown for a period.", "parameters": {"type": "object", "properties": {"period": {"type": "string"}}, "required": ["period"]}},
+    {"name": "get_analytics_summary", "description": "Get a full analytics summary: orders + revenue + payments for a period.", "parameters": {"type": "object", "properties": {"period": {"type": "string"}}, "required": ["period"]}},
+]
+
+
+@require_POST
+def chatbot_api(request):
+    """
+    Role-gated AI chatbot endpoint.
+    POST body: { "message": str, "history": [ {"role": "user"|"model", "text": str}, ... ] }
+    Returns:   { "reply": str }
+    """
+    from django.conf import settings  # type: ignore
+
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, Exception):
+        return JsonResponse({"error": "Invalid JSON body."}, status=400)
+
+    user_message = (body.get("message") or "").strip()
+    history = body.get("history", [])
+
+    if not user_message:
+        return JsonResponse({"error": "Message cannot be empty."}, status=400)
+
+    # ── Determine role ──────────────────────────────────────────
+    if request.user.is_authenticated:
+        role = request.user.role  # "ADMIN", "EMPLOYEE", "CUSTOMER", "RIDER"
+        if role == "RIDER":
+            return JsonResponse({"error": "Chatbot is not available for the Rider role."}, status=403)
+        username = request.user.username
+    else:
+        role = "ANONYMOUS"
+        username = "Guest"
+
+    allowed_tools = TOOL_REGISTRY.get(role, TOOL_REGISTRY["ANONYMOUS"])
+    system_prompt = SYSTEM_PROMPTS.get(role, SYSTEM_PROMPTS["ANONYMOUS"])
+    gemini_tool_declarations = GEMINI_TOOLS.get(role, GEMINI_TOOLS["ANONYMOUS"])
+
+    api_key = getattr(settings, "GEMINI_API_KEY", "")
+
+    # ── STUB MODE (no API key yet) ──────────────────────────────
+    if not api_key:
+        stub_reply = (
+            f"[STUB MODE — Gemini API key not configured] "
+            f"Hi {username}! I'm the Washnet AI assistant. "
+            f"Your role is '{role}' — you have access to {len(allowed_tools)} tool(s): "
+            f"{', '.join(allowed_tools.keys())}. "
+            f"Once the API key is added, I'll respond to: \"{user_message}\""
+        )
+        return JsonResponse({"reply": stub_reply})
+
+    # ── LIVE GEMINI MODE ────────────────────────────────────────
+    try:
+        import google.generativeai as genai   # type: ignore
+
+        genai.configure(api_key=api_key)
+
+        # Build Gemini tool objects from declarations
+        tool_objects = genai.protos.Tool(
+            function_declarations=[
+                genai.protos.FunctionDeclaration(
+                    name=t["name"],
+                    description=t["description"],
+                    parameters=genai.protos.Schema(
+                        type=genai.protos.Type.OBJECT,
+                        properties={
+                            k: genai.protos.Schema(type=genai.protos.Type.STRING if v.get("type") == "string" else genai.protos.Type.NUMBER)
+                            for k, v in t.get("parameters", {}).get("properties", {}).items()
+                        },
+                        required=t.get("parameters", {}).get("required", []),
+                    ) if t.get("parameters", {}).get("properties") else None,
+                )
+                for t in gemini_tool_declarations
+            ]
+        )
+
+        model = genai.GenerativeModel(
+            model_name="gemini-2.5-flash-lite",
+            system_instruction=system_prompt,
+            tools=[tool_objects],
+        )
+
+        # Rebuild conversation history for Gemini
+        chat_history = []
+        for msg in history[-10:]:   # keep last 10 turns max
+            chat_history.append({
+                "role": msg.get("role", "user"),
+                "parts": [{"text": msg.get("text", "")}],
+            })
+
+        chat = model.start_chat(history=chat_history)
+        response = chat.send_message(user_message)
+
+        # ── Function calling loop ───────────────────────────────
+        max_rounds = 5
+        rounds = 0
+        while rounds < max_rounds:
+            rounds += 1
+            fn_calls = [p.function_call for p in response.parts if hasattr(p, "function_call") and p.function_call.name]
+            if not fn_calls:
+                break
+
+            fn_responses = []
+            for fn_call in fn_calls:
+                fn_name = fn_call.name
+                fn_args = dict(fn_call.args)
+
+                # Security: verify this tool is actually allowed for this role
+                if fn_name not in allowed_tools:
+                    fn_result = {"error": f"Tool '{fn_name}' is not available for your role."}
+                else:
+                    tool_fn = allowed_tools[fn_name]
+                    # Inject customer_user
+                    if fn_name in ["track_order", "get_my_orders"] and role in ["CUSTOMER", "EMPLOYEE", "ADMIN"]:
+                        fn_args["customer_user"] = request.user
+                    try:
+                        fn_result = tool_fn(**fn_args)
+                    except Exception as e:
+                        fn_result = {"error": f"Tool execution error: {str(e)}"}
+
+                fn_responses.append(
+                    genai.protos.Part(
+                        function_response=genai.protos.FunctionResponse(
+                            name=fn_name,
+                            response={"result": fn_result},
+                        )
+                    )
+                )
+
+            response = chat.send_message(fn_responses)
+
+        final_text = "".join(p.text for p in response.parts if hasattr(p, "text") and p.text)
+        return JsonResponse({"reply": final_text or "Sorry, I couldn't generate a response. Please try again."})
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        
+        # Gracefully handle Google API rate limits to provide a clean UX
+        error_msg = str(e)
+        if "429" in error_msg or "Quota exceeded" in error_msg:
+            return JsonResponse({"reply": "I'm currently busy with too many requests! Please wait a moment and try again."})
+        
+        return JsonResponse({"reply": f"An error occurred: {error_msg}"}, status=500)
