@@ -608,7 +608,6 @@ def update_order_status(request, order_id):
 
             if request.user.role == User.RoleChoices.RIDER:
                 invalid_rider_statuses = [
-                    Order.StatusChoices.AT_SHOP,
                     Order.StatusChoices.PROCESSING,
                     Order.StatusChoices.READY_FOR_DELIVERY
                 ]
