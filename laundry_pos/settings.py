@@ -139,4 +139,4 @@ CORS_ALLOW_ALL_ORIGINS = True
 # ── AI Chatbot ──────────────────────────────────────────────────
 # Set GEMINI_API_KEY in your environment or .env file.
 # Leave empty to run in stub/demo mode (no real AI calls).
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyCcFZ-8lBU3kP6VptByfU-rhAYV8Ic_b-c')
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
