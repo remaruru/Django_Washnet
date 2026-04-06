@@ -151,7 +151,8 @@ class OrderItem(models.Model):
 
     @property
     def get_total(self):
-        return self.quantity * self.price
+        from decimal import Decimal
+        return (self.quantity * self.price).quantize(Decimal('0.01'))
 
     def __str__(self):
         item_name = self.service.name if self.service else (self.product.name if self.product else "Item")
