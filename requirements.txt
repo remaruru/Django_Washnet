@@ -11,3 +11,10 @@ sqlparse==0.5.5
 typing_extensions==4.15.0
 tzdata==2025.3
 xlsxwriter==3.2.9
+
+# Production / Render
+gunicorn==23.0.0
+psycopg2-binary==2.9.10
+dj-database-url==2.3.0
+whitenoise==6.9.0
+google-generativeai==0.8.4

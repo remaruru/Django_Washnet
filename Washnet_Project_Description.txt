@@ -1,0 +1,374 @@
+# Washnet - Complete Laundry Management System
+
+## System Overview
+
+Washnet is a comprehensive Laundry Point-of-Sale (POS) and Management Web Application built with Django that orchestrates the complete laundry lifecycle from customer ordering to final delivery. The system features role-based access control with distinct workflows for Customers, Employees, Riders, and Administrators, plus an AI-powered chatbot for customer support.
+
+## Technical Architecture
+
+### Core Technologies
+- Backend: Django 6.0.1 with Django REST Framework
+- Database: SQLite (development) / PostgreSQL (production)
+- Frontend: Django Templates with custom CSS (Claymorphism design)
+- AI: Google Gemini API with function calling
+- Authentication: Django Auth with custom User model
+- Payments: Cash, GCash, PayPal integration
+- QR Codes: Receipt generation and verification
+
+### Key Features
+- 10-Stage Order Status System
+- Load-based Pricing (max 7kg per load)
+- Real-time Order Tracking
+- Weather Forecast Integration
+- AI Chatbot with Role-Specific Tools
+- Comprehensive Analytics Dashboard
+- Mobile-Responsive Design
+
+---
+
+## User Roles & Workflows
+
+### 1. CUSTOMER ROLE
+Primary Goal: Place orders and track laundry progress
+
+#### Customer Journey Flow:
+
+1.1 Registration & Profile Setup
+- Register with username, email, phone, address
+- Update delivery preferences and notes
+- Profile management for future orders
+
+1.2 Order Creation Process
+- Weather Forecast: View 7-day forecast suggesting optimal laundry days
+- Service Selection: Choose from Wash & Dry (₱100/kg), Wash Only (₱60/kg), Dry Only (₱50/kg)
+- Load Configuration: Group items into loads (max 7kg each)
+- Product Add-ons: Add Detergent (₱15) and Fabric Conditioner (₱15) per load
+- Order Types:
+  - Drop-off: Customer brings laundry to shop
+  - Delivery: Rider picks up from customer's address
+  - Appointment: Schedule future pickup/delivery
+
+1.3 Order Tracking
+- Real-time Status Updates: 5-step visual tracker (Placed → At Shop → Washing → Ready → Finished)
+- Receipt Token: Secure QR code-based tracking
+- Rider Assignment: View assigned rider details and contact info
+- Order History: Complete transaction history
+
+1.4 AI Chatbot Access
+- Order tracking by receipt token
+- Price estimation for services
+- FAQ about store hours, delivery, payments
+- General service information
+
+---
+
+### 2. EMPLOYEE ROLE (Shop Operations)
+Primary Goal: Process laundry orders and manage shop operations
+
+#### Employee Workflow:
+
+2.1 Dashboard Overview
+- Live Queue Monitoring: Active orders count and status breakdown
+- Personal Metrics: Orders processed today and lifetime total
+- Tab-based Organization:
+  - Central: All shared delivery/appointment orders
+  - Walk-in: Personal walk-in orders (ownership-based)
+  - Completed: Recent completion history
+
+2.2 POS System Operations
+- Walk-in Processing: Create orders for in-store customers
+- Customer Lookup: Search registered customers by name/phone
+- Load Weighing: Process laundry by weight and service type
+- Product Sales: Add retail items (detergent, fabric conditioner)
+- Payment Collection: Handle Cash/GCash/PayPal payments
+- QR Receipt Generation: Automatic receipt creation with unique tokens
+
+2.3 Order Status Management
+- Status Progression: Advance orders through shop workflow
+- Ownership Assignment: Claim unassigned orders automatically
+- Quality Control: Ensure proper processing before delivery
+- Payment Verification: Mark orders as paid
+
+2.4 Operational Tools
+- Today's Queue Summary: Status breakdown and counts
+- Processing Statistics: Current shop capacity
+- Walk-in Analytics: Daily walk-in order tracking
+- Order Lookup: Search by receipt token or order ID
+
+---
+
+### 3. RIDER ROLE (Logistics & Delivery)
+Primary Goal: Handle pickup and delivery logistics
+
+#### Rider Workflow:
+
+3.1 Job Board Management
+- Available Jobs: View PENDING_ACCEPTANCE orders with scheduled pickups
+- Job Acceptance: Claim pickup/delivery assignments
+- Route Planning: GPS-enabled logistics (UI indicates "Live GPS Active")
+
+3.2 Pickup Operations
+- Customer Collection: Pick up laundry from customer addresses
+- Status Updates: Progress from RIDER_ACCEPTED → PICKED_UP
+- Customer Verification: Confirm identity and order details
+- Transport to Shop: Deliver collected laundry to processing facility
+
+3.3 Delivery Operations
+- Shop Collection: Pick up processed laundry from shop
+- Route Optimization: Manage multiple deliveries efficiently
+- Customer Delivery: Final delivery to customer addresses
+- Payment Collection: Handle cash payments upon delivery
+- Completion Confirmation: Mark orders as COMPLETED
+
+3.4 Performance Tracking
+- Delivery History: Complete transaction log
+- Earnings Tracking: Delivery-based compensation
+- Customer Ratings: Service quality feedback
+- Route Efficiency: Time and distance metrics
+
+---
+
+### 4. ADMINISTRATOR ROLE (System Management)
+Primary Goal: Oversee entire business operations and analytics
+
+#### Admin Workflow:
+
+4.1 System Overview Dashboard
+- KPI Metrics: Total orders, revenue, paid/unpaid ratios
+- Real-time Monitoring: Active orders and pending tasks
+- Staff Performance: Employee productivity and rider efficiency
+- Financial Overview: Revenue streams and payment methods
+
+4.2 Analytics & Reporting
+- Time-based Filtering: Today, week, month, custom date ranges
+- Revenue Analytics: Total income, average order value, payment breakdowns
+- Order Analytics: Completion rates, status distributions, source analysis
+- Payment Analysis: Cash vs GCash vs PayPal performance
+- Chart Visualizations: Interactive graphs using Chart.js
+
+4.3 Operational Management
+- Machine Queue View: Real-time shop processing status
+- Order Oversight: Override status changes if needed
+- Staff Coordination: Monitor employee and rider activities
+- Quality Assurance: Review order processing quality
+
+4.4 Payment Administration
+- GCash Verification: Manual approval of digital payments
+- Payment Reconciliation: Ensure all transactions are properly recorded
+- Financial Reporting: Generate business financial statements
+- Audit Trail: Complete transaction history and modifications
+
+4.5 User Management
+- Staff Administration: Add/manage employees and riders
+- Customer Oversight: View customer accounts and activity
+- Role Assignment: Control user permissions and access
+- Account Management: Handle user registration and support
+
+---
+
+## Complete Order Flow Logic
+
+### Order Lifecycle (10 Status States):
+
+1. EXPECTING_DROP_OFF → Customer created drop-off order, awaiting arrival
+2. PENDING_ACCEPTANCE → Delivery order waiting for rider assignment
+3. RIDER_ACCEPTED → Rider accepted pickup job, en route to customer
+4. PICKED_UP → Rider collected laundry, transporting to shop
+5. AT_SHOP → Laundry arrived at shop, waiting for processing
+6. PROCESSING → Employee actively washing/drying laundry
+7. READY_FOR_DELIVERY → Processing complete, ready for rider pickup
+8. OUT_FOR_DELIVERY → Rider collected from shop, delivering to customer
+9. COMPLETED → Order successfully delivered to customer
+10. CANCELLED → Order cancelled by customer or system
+
+### Business Logic Rules:
+
+#### Ownership & Assignment
+- Employee Ownership: Walk-in orders belong to creating employee
+- Rider Assignment: First-come, first-served for available jobs
+- Admin Override: Administrators can modify any assignment
+
+#### Status Transition Rules
+- Employee Restrictions: Cannot set rider-specific statuses (PENDING_ACCEPTANCE, RIDER_ACCEPTED, PICKED_UP, OUT_FOR_DELIVERY)
+- Rider Restrictions: Cannot set shop processing statuses (AT_SHOP, PROCESSING, READY_FOR_DELIVERY)
+- Payment Requirements: GCash orders require admin verification before completion
+
+#### Load Processing Logic
+- Maximum Load: 7kg per physical load
+- Service Pricing: Per kilogram for laundry services
+- Product Pricing: Per piece for add-ons
+- Load Separation: Customers can create multiple loads with different configurations
+
+---
+
+## Pricing & Payment System
+
+### Service Pricing Structure
+| Service | Unit | Price | Max Quantity |
+|---------|------|-------|--------------|
+| Wash & Dry | kg | ₱100.00 | 7kg per load |
+| Wash Only | kg | ₱60.00 | 7kg per load |
+| Dry Only | kg | ₱50.00 | 7kg per load |
+
+### Product Pricing
+| Product | Unit | Price | Description |
+|---------|------|-------|-------------|
+| Detergent | piece | ₱15.00 | Laundry detergent sachet |
+| Fabric Conditioner | piece | ₱15.00 | Fabric softener sachet |
+
+### Payment Methods
+- Cash: Immediate payment, no verification needed
+- GCash: Digital wallet, requires admin verification with reference number
+- PayPal: Online payment, requires admin verification
+
+### Business Rules
+- Price Snapshot: Prices locked at order creation time
+- Load Limits: Maximum 7kg per physical laundry load
+- Payment Verification: GCash/PayPal require manual admin approval
+- Receipt Security: 12-character alphanumeric tokens prevent unauthorized access
+
+---
+
+## AI Chatbot System
+
+### Role-Based Tool Access
+
+#### Anonymous Users
+- FAQ: Store hours, delivery areas, payment methods, how to order
+- Price Estimation: Calculate costs for services and weights
+- Service Information: List all available services and prices
+
+#### Customers
+- Order Tracking: Track orders using receipt tokens
+- My Orders: View all personal order history
+- Account Support: Profile and order assistance
+
+#### Employees
+- Queue Management: Today's order counts and status breakdowns
+- Processing Stats: Current shop capacity and processing counts
+- Walk-in Analytics: Daily walk-in order summaries
+- Order Lookup: Search orders by token or ID
+- Payment Status: Check unpaid orders and ready deliveries
+
+#### Administrators
+- Revenue Analytics: Financial reports and breakdowns
+- Order Summaries: Comprehensive order statistics
+- Payment Analysis: Cash/GCash/PayPal performance metrics
+- Business Intelligence: Full analytics and operational insights
+
+### AI Implementation
+- Gemini API Integration: Google Gemini 2.5 Flash Lite
+- Function Calling: Dynamic tool execution based on user queries
+- Context Awareness: Maintains conversation history
+- Security Layer: Role-based tool access control
+- Fallback Handling: Graceful error handling and rate limiting
+
+---
+
+## Analytics & Reporting
+
+### Admin Analytics Dashboard
+- Time Filters: Today, this week, this month, custom date ranges
+- Revenue Metrics: Total income, average order value, payment method breakdowns
+- Order Analytics: Completion rates, status distributions, order sources
+- Operational KPIs: Processing efficiency, delivery performance
+- Chart Visualizations: Interactive line/bar/pie charts using Chart.js
+
+### Real-time Monitoring
+- Live Queue Status: Current shop processing pipeline
+- Staff Performance: Employee processing counts, rider delivery metrics
+- Financial Overview: Paid/unpaid ratios, pending GCash verifications
+- System Health: Active orders, completion rates, bottleneck identification
+
+---
+
+## Security & Access Control
+
+### Authentication System
+- Django Auth: Secure session-based authentication
+- Role Verification: Strict role checking on all views
+- CSRF Protection: Cross-site request forgery prevention
+- Password Security: Django's built-in password validation
+
+### Data Protection
+- Receipt Tokens: 12-character secure identifiers prevent IDOR attacks
+- Ownership Verification: Users can only access their own data
+- Input Validation: Comprehensive form validation and sanitization
+- SQL Injection Prevention: ORM-based database queries
+
+### Access Control Matrix
+| Feature | Customer | Employee | Rider | Admin |
+|---------|----------|----------|-------|-------|
+| Place Orders | ✅ | ❌ | ❌ | ❌ |
+| Process Orders | ❌ | ✅ | ❌ | ✅ |
+| Handle Deliveries | ❌ | ❌ | ✅ | ✅ |
+| View Analytics | ❌ | ❌ | ❌ | ✅ |
+| Manage Users | ❌ | ❌ | ❌ | ✅ |
+| AI Chatbot | ✅ | ✅ | ❌ | ✅ |
+
+---
+
+## User Interface Design
+
+### Design System
+- Claymorphism: Custom CSS with glassmorphism effects
+- Color Palette: Purple primary (#7C3AED), pink secondary (#DB2777)
+- Typography: Nunito font family with DM Sans fallback
+- Responsive Design: Mobile-first approach with breakpoint system
+- Component Library: Consistent button, card, and form styles
+
+### Dashboard Layouts
+- Customer: Order tracking with visual progress indicators
+- Employee: Operational workflow with tabbed organization
+- Rider: Logistics hub with GPS indicators
+- Admin: Command center with comprehensive metrics
+
+### Interactive Elements
+- Status Trackers: Visual progress bars and step indicators
+- Modal Systems: Service/product selection with load configuration
+- Toast Notifications: Real-time feedback and error messages
+- AI Chat Widget: Floating chatbot with conversation history
+
+---
+
+## Deployment & Production
+
+### Production Requirements
+- Web Server: Gunicorn WSGI server
+- Reverse Proxy: Nginx for static files and SSL
+- Database: PostgreSQL for production data
+- SSL Certificate: Let's Encrypt for HTTPS
+- Environment Variables: Secure configuration management
+
+### Monitoring & Maintenance
+- Application Logs: Comprehensive error tracking
+- Database Backups: Automated backup procedures
+- Performance Monitoring: Query optimization and caching
+- Security Updates: Regular dependency updates
+
+---
+
+## Business Impact
+
+### Operational Efficiency
+- Automated Workflows: Streamlined order processing from start to finish
+- Real-time Visibility: All stakeholders can track order status instantly
+- Load Optimization: Efficient laundry processing with weight-based pricing
+- Staff Coordination: Clear role separation and communication
+
+### Customer Experience
+- Self-Service Ordering: 24/7 order placement and tracking
+- Transparent Pricing: Clear cost breakdown and load configuration
+- Weather Integration: Smart laundry planning suggestions
+- AI Support: Instant answers to common questions
+
+### Business Intelligence
+- Comprehensive Analytics: Data-driven decision making
+- Financial Tracking: Revenue analysis and payment optimization
+- Performance Metrics: Staff productivity and operational efficiency
+- Scalability: System designed to handle business growth
+
+---
+
+This comprehensive system transforms traditional laundry operations into a modern, tech-enabled service that benefits customers, staff, and business owners through automation, transparency, and intelligent insights. The complete flow from customer order to final delivery is meticulously designed with role-specific workflows, real-time tracking, and AI-powered support.</content>
+<parameter name="filePath">c:\Users\Admin\Downloads\Django_Washnet\Washnet_Project_Description.txt
