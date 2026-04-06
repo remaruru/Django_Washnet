@@ -122,6 +122,17 @@ class Order(models.Model):
     def status_choices_list(self):
         return self.StatusChoices.choices
 
+    def save(self, *args, **kwargs):
+        # Auto-inherit from customer profile if not provided
+        if self.customer:
+            if not self.delivery_address and self.customer.address:
+                self.delivery_address = self.customer.address
+            if not self.delivery_contact and self.customer.phone_number:
+                self.delivery_contact = self.customer.phone_number
+            if not self.delivery_notes and self.customer.delivery_notes:
+                self.delivery_notes = self.customer.delivery_notes
+        super().save(*args, **kwargs)
+
 class OrderItem(models.Model):
     class ItemTypeChoices(models.TextChoices):
         SERVICE = 'SERVICE', _('Service')
