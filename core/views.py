@@ -404,6 +404,25 @@ def add_user(request):
     return render(request, 'core/admin/add_user.html', {'form': form})
 
 @login_required
+def admin_fix_qrs(request):
+    if request.user.role != User.RoleChoices.ADMIN:
+        return redirect('dashboard')
+        
+    try:
+        import sys
+        # ensure root path is in sys.path
+        from django.conf import settings
+        if str(settings.BASE_DIR) not in sys.path:
+            sys.path.append(str(settings.BASE_DIR))
+        import fix_qrs
+        fix_qrs.generate_missing_qrs()
+        messages.success(request, 'Successfully ran the QR code backfill script on the server!')
+    except Exception as e:
+        messages.error(request, f'Failed to run script: {e}')
+        
+    return redirect('admin_dashboard')
+
+@login_required
 def employee_dashboard(request):
     if request.user.role != User.RoleChoices.EMPLOYEE:
          return redirect('dashboard')

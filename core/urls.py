@@ -21,6 +21,7 @@ urlpatterns = [
     path('admin-users/', views.admin_users, name='admin_users'),
     path('admin-add-user/', views.add_user, name='add_user'),
     path('admin-verify-gcash/<int:order_id>/', views.verify_gcash_payment, name='verify_gcash'),
+    path('admin-fix-qrs/', views.admin_fix_qrs, name='admin_fix_qrs'),
     
     path('employee-dashboard/', views.employee_dashboard, name='employee_dashboard'),
     path('customer-dashboard/', views.customer_dashboard, name='customer_dashboard'),
