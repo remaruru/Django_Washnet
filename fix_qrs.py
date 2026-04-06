@@ -16,15 +16,15 @@ DOMAIN = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '127.0.0.1:8000')
 PROTOCOL = 'https' if 'onrender.com' in DOMAIN else 'http'
 
 def generate_missing_qrs():
-    # Find orders where the qr_code picture is blank/null
-    orders = Order.objects.filter(qr_code__exact='')
+    # Find all orders and aggressively regenerate to fix broken local links
+    orders = Order.objects.all()
     
     count = orders.count()
     if count == 0:
-        print("All orders currently have QR codes! Nothing to do.")
+        print("No orders exist in the database! Nothing to do.")
         return
 
-    print(f"Found {count} orders missing a QR code. Generating now...")
+    print(f"Aggressively regenerating QR codes for {count} orders to force Cloudinary sync...")
     
     success_count = 0
     for order in orders:
