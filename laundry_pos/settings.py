@@ -42,6 +42,10 @@ INSTALLED_APPS = [
 
     # Local apps
     'core',
+
+    # Cloudinary Integration
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 MIDDLEWARE = [
@@ -123,6 +127,10 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Cloudinary Storage for uploaded media (QR codes)
+if os.environ.get('CLOUDINARY_URL'):
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
