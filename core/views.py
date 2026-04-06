@@ -1117,13 +1117,8 @@ def delivery_history(request):
     return render(request, 'core/delivery/history.html', context)
 
 # --- RECEIPT ---
-@login_required
 def order_receipt(request, receipt_token):
     order = get_object_or_404(Order, receipt_token=receipt_token)
-    # Both customer and employee can view it
-    if request.user.role == User.RoleChoices.CUSTOMER and order.customer != request.user:
-        return redirect('dashboard')
-    
     return render(request, 'core/receipt.html', {'order': order})
 
 # --- APPOINTMENT LOGIC ---
