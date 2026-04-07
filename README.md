@@ -10,7 +10,7 @@ Washnet is a comprehensive Laundry Point-of-Sale (POS) and Management Web Applic
 - **Weather Forecast Integration**: Suggests optimal laundry days to customers based on real-time weather.
 - **Secure QR Code Receipts**: Uses 12-character alphanumeric tokens preventing unauthorized access.
 - **Real-time Queue & Dashboard**: Live shop monitoring and status progression metrics.
-- **Payments**: Cash, GCash (admin verification required), and PayPal integration.
+- **Payments**: Cash and GCash (admin verification required).
 - **Mobile Responsive & Claymorphism UI**: Beautiful, engaging UI with glassmorphism effects.
 
 ---
@@ -52,7 +52,7 @@ Washnet is a comprehensive Laundry Point-of-Sale (POS) and Management Web Applic
 ### 4. 👑 Administrator
 **Primary Goal:** System oversight, deep analytics, and financial security.
 - **System KPIs Dashboard:** Monitor Total Income, Paid VS Unpaid ratio, Staff Counts.
-- **Analytics Center (`/admin-analytics/`):** Deep statistical charting (Chart.js) with views for Today, This Week, Month, and Custom Dates. Breeds metrics on payment formats (Cash vs GCash vs PayPal).
+- **Analytics Center (`/admin-analytics/`):** Deep statistical charting (Chart.js) with views for Today, This Week, Month, and Custom Dates. Breeds metrics on payment formats (Cash vs GCash).
 - **God-View Queue (`/admin-queue/`):** Highly optimized live track of the active washing machines without hitting N+1 DB locks. 
 - **Payment Verification:** Manual approval center for GCash / digital wallet reference numbers. Updates order natively to `PAID`.
 - **Staff Control (`/admin-users/`):** Direct creation of employee and rider accounts securely.
