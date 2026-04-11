@@ -22,3 +22,5 @@ google-generativeai==0.8.4
 cloudinary==1.44.1
 django-cloudinary-storage==0.3.0
 
+
+requests==2.31.0

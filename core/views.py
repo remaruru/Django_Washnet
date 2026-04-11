@@ -12,6 +12,10 @@ from io import BytesIO
 from django.core.files.base import ContentFile # type: ignore
 from core.models import User, Order, Appointment, Service, Product, OrderItem # type: ignore
 from core.forms import CustomUserCreationForm # type: ignore
+import requests
+import urllib.parse
+from django.conf import settings
+from django.utils.crypto import get_random_string
 
 # --- AUTHENTICATION VIEWS ---
 
@@ -63,6 +67,115 @@ def register_customer_view(request):
         return redirect('dashboard')
         
     return render(request, 'core/register.html')
+
+def google_login(request):
+    state = get_random_string(32)
+    request.session['oauth_state'] = state
+    params = {
+        'client_id': settings.GOOGLE_OAUTH_CLIENT_ID,
+        'redirect_uri': settings.GOOGLE_OAUTH_REDIRECT_URI,
+        'response_type': 'code',
+        'scope': 'openid email profile',
+        'state': state,
+        'access_type': 'offline',
+        'prompt': 'select_account',
+    }
+    url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
+    return redirect(url)
+
+def google_callback(request):
+    code = request.GET.get('code')
+    state = request.GET.get('state')
+    session_state = request.session.pop('oauth_state', None)
+    
+    if not code or not state or state != session_state:
+        messages.error(request, 'Invalid OAuth state or missing code.')
+        return redirect('login')
+        
+    token_url = "https://oauth2.googleapis.com/token"
+    token_data = {
+        'client_id': settings.GOOGLE_OAUTH_CLIENT_ID,
+        'client_secret': settings.GOOGLE_OAUTH_CLIENT_SECRET,
+        'code': code,
+        'grant_type': 'authorization_code',
+        'redirect_uri': settings.GOOGLE_OAUTH_REDIRECT_URI,
+    }
+    try:
+        token_response = requests.post(token_url, data=token_data)
+        token_response.raise_for_status()
+    except requests.RequestException:
+        messages.error(request, 'Failed to exchange tokens with Google.')
+        return redirect('login')
+        
+    access_token = token_response.json().get('access_token')
+    if not access_token:
+        messages.error(request, 'Failed to obtain access token.')
+        return redirect('login')
+        
+    userinfo_url = "https://www.googleapis.com/oauth2/v2/userinfo"
+    try:
+        userinfo_response = requests.get(userinfo_url, headers={'Authorization': f'Bearer {access_token}'})
+        userinfo_response.raise_for_status()
+    except requests.RequestException:
+        messages.error(request, 'Failed to fetch user profile.')
+        return redirect('login')
+        
+    userinfo = userinfo_response.json()
+    email = userinfo.get('email')
+    verified_email = userinfo.get('verified_email', False)
+    name = userinfo.get('name', '')
+    google_id = userinfo.get('id')
+    
+    if not email or not verified_email:
+        messages.error(request, 'Verified Google email is required.')
+        return redirect('login')
+        
+    try:
+        user = User.objects.get(email=email)
+        if user.role != User.RoleChoices.CUSTOMER:
+            messages.error(request, 'OAuth login is restricted to customers.')
+            return redirect('login')
+    except User.DoesNotExist:
+        # Create new customer
+        username = email.split('@')[0]
+        if User.objects.filter(username=username).exists():
+            username = f"{username}_{get_random_string(5)}"
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            first_name=name.split(' ')[0] if name else '',
+            last_name=' '.join(name.split(' ')[1:]) if name else '',
+            role=User.RoleChoices.CUSTOMER,
+        )
+        
+    login(request, user)
+    
+    if not user.phone_number or not user.address:
+        return redirect('complete_profile')
+        
+    return redirect('dashboard')
+
+@login_required
+def complete_profile(request):
+    if request.user.role != User.RoleChoices.CUSTOMER:
+        return redirect('dashboard')
+        
+    if request.method == 'POST':
+        phone_number = request.POST.get('phone_number')
+        address = request.POST.get('address')
+        delivery_notes = request.POST.get('delivery_notes')
+        
+        if not phone_number or not address:
+            messages.error(request, 'Phone number and delivery address are required.')
+        else:
+            request.user.phone_number = phone_number
+            request.user.address = address
+            request.user.delivery_notes = delivery_notes
+            request.user.save()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('dashboard')
+            
+    return render(request, 'core/auth/complete_profile.html')
 
 # --- PUBLIC VIEWS ---
 
@@ -120,6 +233,8 @@ def dashboard_redirect(request):
     elif request.user.role == User.RoleChoices.EMPLOYEE:
         return redirect('employee_dashboard')
     elif request.user.role == User.RoleChoices.CUSTOMER:
+        if not request.user.phone_number or not request.user.address:
+            return redirect('complete_profile')
         return redirect('customer_dashboard')
     elif request.user.role == User.RoleChoices.RIDER:
         return redirect('delivery_dashboard')
@@ -891,6 +1006,8 @@ def employee_pos(request):
 def customer_dashboard(request):
     if request.user.role != User.RoleChoices.CUSTOMER:
          return redirect('dashboard')
+    if not request.user.phone_number or not request.user.address:
+        return redirect('complete_profile')
          
     active_orders = request.user.customer_orders.exclude(status__in=[Order.StatusChoices.COMPLETED, Order.StatusChoices.CANCELLED]).order_by('-created_at')
     appointments = request.user.appointments.filter(status__in=[Appointment.StatusChoices.PENDING, Appointment.StatusChoices.CONFIRMED]).order_by('appointment_date')
@@ -916,6 +1033,8 @@ def customer_history(request):
 def customer_create_order(request):
     if request.user.role != User.RoleChoices.CUSTOMER:
         return redirect('dashboard')
+    if not request.user.phone_number or not request.user.address:
+        return redirect('complete_profile')
         
     # Seed predefined services and products
     services_seed = [
@@ -1143,6 +1262,8 @@ def order_receipt(request, receipt_token):
 # --- APPOINTMENT LOGIC ---
 @login_required
 def book_appointment(request):
+    if not request.user.phone_number or not request.user.address:
+        return redirect('complete_profile')
     if request.method == 'POST':
         apt_type = request.POST.get('appointment_type')
         apt_date = request.POST.get('appointment_date')

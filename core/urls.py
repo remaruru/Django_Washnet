@@ -6,6 +6,9 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('register/', views.register_customer_view, name='register'),
+    path('oauth/google/login/', views.google_login, name='google_login'),
+    path('oauth/google/callback/', views.google_callback, name='google_callback'),
+    path('customer/complete-profile/', views.complete_profile, name='complete_profile'),
     
     # Landing Page
     path('', views.home, name='home'),

@@ -25,6 +25,28 @@ ALLOWED_HOSTS = [
     '.onrender.com',  # Allow all Render subdomains
 ]
 
+# ── CSRF trusted origins (required for OAuth callback and forms on Render) ─────
+
+RENDER_EXTERNAL_URL = os.environ.get('RENDER_EXTERNAL_URL', '')
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+if RENDER_EXTERNAL_URL:
+    CSRF_TRUSTED_ORIGINS.append(RENDER_EXTERNAL_URL)
+
+# ── Production security (only when DEBUG=False / deployed on Render) ───────────
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000        # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+
 
 # ── Application definition ────────────────────────────────────────────────────
 
@@ -150,3 +172,17 @@ CORS_ALLOW_ALL_ORIGINS = True
 # ── AI Chatbot ────────────────────────────────────────────────────────────────
 
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+
+
+# ── Google OAuth ──────────────────────────────────────────────────────────────
+# Set GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, and
+# GOOGLE_OAUTH_REDIRECT_URI as environment variables:
+#   - Locally : export them in your terminal / .env
+#   - Render  : add them in Dashboard → Environment → Environment Variables
+
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID', '')
+GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET', '')
+GOOGLE_OAUTH_REDIRECT_URI = os.environ.get(
+    'GOOGLE_OAUTH_REDIRECT_URI',
+    'http://127.0.0.1:8000/oauth/google/callback/',  # local dev default
+)

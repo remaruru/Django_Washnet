@@ -17,6 +17,19 @@ services:
       - key: GEMINI_API_KEY
         sync: false  # Set this manually in the Render dashboard
 
+      # ── Google OAuth ────────────────────────────────────────────────────────
+      # Obtain these from Google Cloud Console → APIs & Services → Credentials
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_OAUTH_REDIRECT_URI
+        sync: false  # e.g. https://your-app.onrender.com/oauth/google/callback/
+
+      # Render automatically sets RENDER_EXTERNAL_URL; we read it for CSRF
+      - key: RENDER_EXTERNAL_URL
+        sync: false
+
 databases:
   - name: washnet-db
     plan: free
