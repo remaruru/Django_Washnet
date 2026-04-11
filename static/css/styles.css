@@ -728,3 +728,135 @@ p {
     --tw-scale-x: 1;
     --tw-scale-y: 1;
 }
+
+/* ==========================================================================
+   MOBILE PORTRAIT OPTIMIZATIONS (Max Width: 768px ONLY)
+   DO NOT modify desktop queries. Ensures exact preservation of >=768px design.
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+    /* 1. Global Overflow Protection */
+    body, html, .dashboard-wrap, .dashboard-content, .public-layout {
+        overflow-x: hidden !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+    }
+
+    /* 2. Single Column Structural Conversion */
+    .grid-cols-2, .grid-cols-3, .grid-cols-4 {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Force implicit metric grids to solitary columns */
+    .dashboard-main-inner > div.grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* 3. Full Width Cards and Elements */
+    .dashboard-main {
+        padding: var(--space-4) !important;
+    }
+    
+    .dashboard-main-inner {
+        gap: var(--space-4) !important;
+    }
+
+    .clay-card {
+        padding: var(--space-4) !important;
+        border-radius: var(--radius-lg) !important;
+        width: 100% !important;
+        margin-bottom: var(--space-2) !important;
+    }
+
+    /* 4. Touch-Friendly Inputs & Buttons */
+    .clay-input, .clay-auth-input {
+        padding: 1rem 1rem !important; /* Larger hit area */
+        font-size: 16px !important; /* 16px prevents iOS auto-zoom on field focus */
+    }
+
+    .clay-btn {
+        padding: 0.875rem 1.25rem !important;
+        min-height: 48px !important; /* Apple highly recommends 44-48px min height for touch taps */
+        font-size: var(--text-base) !important;
+        text-align: center;
+        justify-content: center;
+    }
+
+    /* Allow standard header buttons or table row buttons to not consume 100% width indiscriminately */
+    .dashboard-header .clay-btn, td .clay-btn, .clay-table .clay-btn {
+        padding: 0.5rem 1rem !important;
+        min-height: 38px !important;
+        width: auto !important;
+    }
+
+    /* 5. Header / Profile / Sidebar constraints */
+    .header-user-profile > div:first-child {
+        display: none !important; /* Hides verbose username text block, keeps just the avatar circle */
+    }
+
+    .dashboard-header {
+        padding: 0 var(--space-4) !important;
+    }
+
+    .sidebar {
+        width: 250px !important; /* Standard side panel width */
+    }
+
+    /* 6. Strict Table-to-Card Collapse */
+    .clay-table-wrapper {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
+    .clay-table, .clay-table tbody {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    /* Hide horizontal headers completely */
+    .clay-table thead, .clay-table th {
+        display: none !important;
+    }
+
+    /* Convert each table row to a visually distinct stacked card */
+    .clay-table tr {
+        display: flex !important;
+        flex-direction: column !important;
+        background: var(--surface) !important;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius-md) !important;
+        box-shadow: var(--shadow-clay-card) !important;
+        margin-bottom: var(--space-4) !important;
+        padding: var(--space-4) !important;
+    }
+
+    .clay-table td {
+        display: block !important;
+        width: 100% !important;
+        text-align: left !important;
+        padding: var(--space-2) 0 !important;
+        border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+        font-size: var(--text-base) !important;
+    }
+
+    .clay-table td:last-child {
+        border-bottom: none !important;
+        padding-bottom: 0 !important;
+    }
+
+    /* 7. Modal Constraints */
+    /* Ensure any explicitly inline-styled modals get overridden utilizing [style] or class hooks */
+    .auth-card, [style*="max-width: 500px"], [style*="max-width: 600px"], [style*="max-width: 800px"], .modal-content {
+        max-width: 95% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        padding: var(--space-4) !important;
+        height: auto !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+    }
+}
