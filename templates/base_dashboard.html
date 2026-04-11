@@ -4,10 +4,12 @@
 {% block body_class %}dashboard-layout{% endblock %}
 
 {% block layout %}
-    <!-- Claymorphism Blob Canvas -->
-    <div style="position: absolute; top: -10%; left: -10%; width: 500px; height: 500px; background: #d8b4fe; border-radius: 50%; filter: blur(80px); z-index: 0; opacity: 0.4; pointer-events: none;"></div>
-    <div style="position: absolute; top: 20%; right: -5%; width: 400px; height: 400px; background: #93c5fd; border-radius: 50%; filter: blur(80px); z-index: 0; opacity: 0.3; pointer-events: none;"></div>
-    <div style="position: absolute; bottom: -10%; left: 20%; width: 600px; height: 600px; background: #f9a8d4; border-radius: 50%; filter: blur(80px); z-index: 0; opacity: 0.2; pointer-events: none;"></div>
+    <!-- Claymorphism Blob Canvas Background Wrapper -->
+    <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow: hidden; z-index: 0; pointer-events: none;">
+        <div style="position: absolute; top: -10%; left: -10%; width: 500px; height: 500px; background: #d8b4fe; border-radius: 50%; filter: blur(80px); opacity: 0.4;"></div>
+        <div style="position: absolute; top: 20%; right: -5%; width: 400px; height: 400px; background: #93c5fd; border-radius: 50%; filter: blur(80px); opacity: 0.3;"></div>
+        <div style="position: absolute; bottom: -10%; left: 20%; width: 600px; height: 600px; background: #f9a8d4; border-radius: 50%; filter: blur(80px); opacity: 0.2;"></div>
+    </div>
 
     <div class="dashboard-wrap" style="position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: row;">
         
