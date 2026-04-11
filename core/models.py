@@ -2,7 +2,11 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 import string
+import hashlib
+import secrets
 from django.utils.crypto import get_random_string
+from django.utils import timezone
+from datetime import timedelta
 
 def generate_receipt_token():
     return get_random_string(12, allowed_chars=string.ascii_letters + string.digits)
@@ -183,3 +187,119 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"{self.get_appointment_type_display()} Appointment for {self.customer.username} on {self.appointment_date.strftime('%Y-%m-%d %H:%M')}"
+
+
+# ── Admin OTP Security ────────────────────────────────────────────────────────
+
+class AdminOTPEmail(models.Model):
+    """Stores the dedicated OTP email address for an Admin account."""
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='admin_otp_email',
+        limit_choices_to={'role': 'ADMIN'},
+    )
+    otp_email = models.EmailField(
+        help_text="Email address where Admin OTP codes are delivered."
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"OTP Email for {self.user.username}: {self.otp_email}"
+
+    @staticmethod
+    def get_for_user(user):
+        """Return the OTP email address for the admin, or fall back to user.email."""
+        try:
+            return user.admin_otp_email.otp_email
+        except AdminOTPEmail.DoesNotExist:
+            return user.email
+
+
+class AdminOTP(models.Model):
+    """Stores a single hashed OTP token for admin authentication events."""
+
+    class PurposeChoices(models.TextChoices):
+        LOGIN = 'LOGIN', _('Login Verification')
+        EMAIL_CHANGE = 'EMAIL_CHANGE', _('Email Change Verification')
+
+    OTP_EXPIRY_MINUTES = 10
+    MAX_ATTEMPTS = 5
+    RESEND_COOLDOWN_SECONDS = 60
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='admin_otps',
+    )
+    hashed_code = models.CharField(max_length=64)   # SHA-256 hex digest
+    purpose = models.CharField(
+        max_length=20,
+        choices=PurposeChoices.choices,
+        default=PurposeChoices.LOGIN,
+    )
+    expires_at = models.DateTimeField()
+    attempts = models.IntegerField(default=0)
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"OTP [{self.purpose}] for {self.user.username} — {'used' if self.is_used else 'pending'}"
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    @property
+    def is_locked(self):
+        return self.attempts >= self.MAX_ATTEMPTS
+
+    @classmethod
+    def generate(cls, user, purpose):
+        """
+        Invalidate all existing active OTPs for this user+purpose,
+        generate a new 6-digit plain code, store its SHA-256 hash, and
+        return (otp_instance, plain_code) so the plain code can be emailed.
+        """
+        # Invalidate previous active OTPs for same purpose
+        cls.objects.filter(user=user, purpose=purpose, is_used=False).update(is_used=True)
+
+        plain_code = ''.join(secrets.choice('0123456789') for _ in range(6))
+        hashed = hashlib.sha256(plain_code.encode()).hexdigest()
+        otp = cls.objects.create(
+            user=user,
+            hashed_code=hashed,
+            purpose=purpose,
+            expires_at=timezone.now() + timedelta(minutes=cls.OTP_EXPIRY_MINUTES),
+        )
+        return otp, plain_code
+
+    def verify(self, submitted_code):
+        """
+        Attempt to verify a submitted plain code.
+        Returns True on success, False otherwise.
+        Marks OTP as used on success; increments attempt counter on failure.
+        """
+        if self.is_used or self.is_expired or self.is_locked:
+            return False
+        submitted_hash = hashlib.sha256(submitted_code.encode()).hexdigest()
+        if secrets.compare_digest(submitted_hash, self.hashed_code):
+            self.is_used = True
+            self.save(update_fields=['is_used'])
+            return True
+        self.attempts += 1
+        self.save(update_fields=['attempts'])
+        return False
+
+    @classmethod
+    def get_active(cls, user, purpose):
+        """Return the most recent non-expired, non-used OTP for this user+purpose."""
+        return cls.objects.filter(
+            user=user,
+            purpose=purpose,
+            is_used=False,
+            expires_at__gt=timezone.now(),
+        ).first()

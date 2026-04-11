@@ -1,0 +1,43 @@
+{% extends 'base_auth.html' %}
+{% load static %}
+
+{% block title %}Verify Identity - WASHNET{% endblock %}
+
+{% block content %}
+<div style="width: 100%; max-width: 440px; text-align: center;">
+
+    <a href="{% url 'admin_settings' %}" style="display: inline-flex; align-items: center; gap: var(--space-2); text-decoration: none; margin-bottom: var(--space-8); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #d97706); display: flex; align-items: center; justify-content: center; box-shadow: 12px 12px 24px #d1cddb, -12px -12px 24px #ffffff; color: white;">
+            <i data-feather="key" style="width: 28px; height: 28px;"></i>
+        </div>
+    </a>
+
+    <div style="margin-bottom: var(--space-8);">
+        <p style="text-transform: uppercase; letter-spacing: 0.1em; font-size: var(--text-xs); font-weight: 800; color: #d97706; margin-bottom: var(--space-2);">Security Settings</p>
+        <h1 style="font-size: var(--text-3xl); font-weight: 900; color: var(--text-main); margin-bottom: var(--space-2); letter-spacing: -0.03em; font-family: 'Nunito', sans-serif;">Verify Identity</h1>
+        <p style="color: var(--text-muted); font-weight: 600; font-size: var(--text-base);">To change your 2FA email, please enter the code sent to your current email (<strong>{{ masked_email }}</strong>).</p>
+    </div>
+
+    <div class="clay-auth-card" style="text-align: left; padding: var(--space-8);">
+        <form method="POST" action="{% url 'admin_verify_change_otp' %}">
+            {% csrf_token %}
+            
+            <div class="form-group" style="margin-bottom: var(--space-6);">
+                <label for="otp_code" class="form-label" style="font-weight: 800; color: var(--text-main); margin-bottom: var(--space-3); text-align: center; display: block;">Security Code</label>
+                <input type="text" id="otp_code" name="otp_code" class="clay-auth-input" style="font-weight: 800; font-size: 24px; text-align: center; letter-spacing: 0.2em;" placeholder="••••••" maxlength="6" pattern="\d*" inputmode="numeric" required autofocus autocomplete="one-time-code">
+            </div>
+
+            <button type="submit" class="clay-auth-btn" style="width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 900; letter-spacing: 0.02em; background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
+                Verify Identity <i data-feather="check" style="width: 18px; height: 18px;"></i>
+            </button>
+            <a href="{% url 'admin_settings' %}" style="display: block; text-align: center; margin-top: var(--space-4); color: var(--text-muted); font-size: 13px; font-weight: 700; text-decoration: none;">Cancel</a>
+        </form>
+    </div>
+
+    <p style="font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); margin-top: var(--space-8);">
+        Didn't receive the code? <br>
+        <a href="{% url 'admin_resend_otp' %}" style="color: #d97706; font-weight: 800; text-decoration: none; border-bottom: 2px solid rgba(217,119,6,0.3); padding-bottom: 2px;">Resend Code</a>
+    </p>
+
+</div>
+{% endblock %}

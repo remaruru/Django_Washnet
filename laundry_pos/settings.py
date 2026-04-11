@@ -186,3 +186,20 @@ GOOGLE_OAUTH_REDIRECT_URI = os.environ.get(
     'GOOGLE_OAUTH_REDIRECT_URI',
     'http://127.0.0.1:8000/oauth/google/callback/',  # local dev default
 )
+
+
+# -- Email (Admin OTP) ---------------------------------------------------------
+# Locally (DEBUG=True): prints emails to the console -- no SMTP needed.
+# On Render (DEBUG=False): reads from environment variables.
+
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST          = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT          = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS       = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL  = os.environ.get('DEFAULT_FROM_EMAIL', 'WASHNET Security <noreply@washnet.app>')
