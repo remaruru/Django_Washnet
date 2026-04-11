@@ -26,12 +26,12 @@ urlpatterns = [
     path('admin-verify-gcash/<int:order_id>/', views.verify_gcash_payment, name='verify_gcash'),
     path('admin-fix-qrs/', views.admin_fix_qrs, name='admin_fix_qrs'),
     # Admin OTP
-    path('admin/verify-otp/', views.admin_verify_otp, name='admin_verify_otp'),
-    path('admin/resend-otp/', views.admin_resend_otp, name='admin_resend_otp'),
-    path('admin/settings/', views.admin_settings, name='admin_settings'),
-    path('admin/settings/request-change-otp/', views.admin_request_change_otp, name='admin_request_change_otp'),
-    path('admin/settings/verify-change-otp/', views.admin_verify_change_otp, name='admin_verify_change_otp'),
-    path('admin/settings/save-otp-email/', views.admin_save_otp_email, name='admin_save_otp_email'),
+    path('admin-dashboard/verify-otp/', views.admin_verify_otp, name='admin_verify_otp'),
+    path('admin-dashboard/resend-otp/', views.admin_resend_otp, name='admin_resend_otp'),
+    path('admin-dashboard/settings/', views.admin_settings, name='admin_settings'),
+    path('admin-dashboard/settings/request-change-otp/', views.admin_request_change_otp, name='admin_request_change_otp'),
+    path('admin-dashboard/settings/verify-change-otp/', views.admin_verify_change_otp, name='admin_verify_change_otp'),
+    path('admin-dashboard/settings/save-otp-email/', views.admin_save_otp_email, name='admin_save_otp_email'),
     
     path('employee-dashboard/', views.employee_dashboard, name='employee_dashboard'),
     path('customer-dashboard/', views.customer_dashboard, name='customer_dashboard'),

@@ -209,11 +209,11 @@ class AdminOTPEmail(models.Model):
 
     @staticmethod
     def get_for_user(user):
-        """Return the OTP email address for the admin, or fall back to user.email."""
+        """Return the OTP email address for the admin, or None if not configured."""
         try:
             return user.admin_otp_email.otp_email
         except AdminOTPEmail.DoesNotExist:
-            return user.email
+            return None
 
 
 class AdminOTP(models.Model):
