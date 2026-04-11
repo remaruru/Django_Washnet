@@ -16,17 +16,43 @@
 .pos-workspace {
     display: flex;
     flex: 1;
-    overflow: hidden;
+    overflow-y: auto; /* Allow full vertical scrolling on mobile */
+    overflow-x: hidden;
     position: relative;
     flex-direction: column;
     background-color: var(--workspace-bg);
+    padding: var(--space-4);
+    gap: var(--space-6);
+}
+
+.pos-catalog-left {
+    flex: none; /* Do not limit height on mobile */
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.pos-sidebar-right {
+    flex: none;
+    width: 100%;
+    border-radius: var(--radius-xl);
+    background: #FFFFFF;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    overflow: visible; /* Let inner content determine height dynamically */
+    display: flex;
+    flex-direction: column;
 }
 
 @media (min-width: 768px) {
     .pos-workspace {
         flex-direction: row;
-        gap: var(--space-6);
+        overflow: hidden !important; /* Lock bounds on desktop */
         padding: var(--space-6);
+    }
+    .pos-catalog-left {
+        flex: 3;
+        overflow-y: auto;
+        gap: var(--space-8);
     }
     .pos-sidebar-right {
         flex: none !important;
@@ -46,13 +72,7 @@
     }
 }
 
-.pos-catalog-left {
-    flex: 3;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-8);
-}
+
 
 /* Service Crads Override */
 .clay-card {
