@@ -41,12 +41,12 @@
 {% endblock %}
 
 {% block header_actions %}
-<div style="display: flex; align-items: center; gap: var(--space-6);">
+<div class="header-custom-actions" style="display: flex; align-items: center; gap: var(--space-6);">
     <a href="{% url 'employee_pos' %}" class="clay-btn clay-btn-primary" style="padding: var(--space-2) var(--space-4); font-size: var(--text-sm);">
         <i data-feather="plus" style="width: 16px; height: 16px;"></i> New Walk-in
     </a>
     <div style="width: 1px; height: 32px; background: var(--border);"></div>
-    <div style="display: flex; align-items: center; gap: var(--space-3);">
+    <div class="header-user-profile" style="display: flex; align-items: center; gap: var(--space-3);">
         <div style="text-align: right;">
             <p style="font-size: var(--text-sm); font-weight: 800; color: var(--text-main); margin: 0;">{{ user.username }}</p>
             <p style="font-size: var(--text-xs); font-weight: 600; color: var(--text-muted); margin: 0;">Employee</p>
