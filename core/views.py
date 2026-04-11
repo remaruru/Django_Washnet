@@ -21,10 +21,13 @@ from django.utils.crypto import get_random_string
 # --- AUTHENTICATION VIEWS ---
 
 def _send_otp_email(user, plain_code, purpose):
-    """Helper: send OTP email to the admin's configured OTP address."""
+    """Helper: send OTP email to the admin's configured OTP address using Brevo HTTP API."""
+    import re
+    
     recipient = AdminOTPEmail.get_for_user(user)
     if not recipient:
         return
+        
     subject = 'WASHNET Admin Login OTP' if purpose == AdminOTP.PurposeChoices.LOGIN else 'WASHNET Admin Security Code'
     body = (
         f'Hi {user.username},\n\n'
@@ -34,7 +37,37 @@ def _send_otp_email(user, plain_code, purpose):
         f'If you did not request this code, please contact your system administrator immediately.\n\n'
         f'-- WASHNET Security'
     )
-    send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [recipient], fail_silently=True)
+
+    brevo_api_key = getattr(settings, 'BREVO_API_KEY', None)
+    
+    if brevo_api_key and not settings.DEBUG:
+        # Production: Use Brevo HTTP API (Bypasses Render's port 587 block)
+        url = "https://api.brevo.com/v3/smtp/email"
+        
+        # Extract plain email from "Name <email@domain.com>"
+        match = re.search(r'<(.*?)>', settings.DEFAULT_FROM_EMAIL)
+        from_email = match.group(1) if match else settings.DEFAULT_FROM_EMAIL
+        
+        headers = {
+            "accept": "application/json",
+            "api-key": brevo_api_key,
+            "content-type": "application/json"
+        }
+        payload = {
+            "sender": {"email": from_email, "name": "WASHNET Security"},
+            "to": [{"email": recipient, "name": user.username}],
+            "subject": subject,
+            "htmlContent": body.replace('\n', '<br>')
+        }
+        try:
+            # We use a 10s timeout to ensure it doesn't freeze Gunicorn if Brevo is slow
+            requests.post(url, json=payload, headers=headers, timeout=10)
+        except Exception as e:
+            print(f"Brevo API Error: {e}")
+    else:
+        # Development: Print to console
+        send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [recipient], fail_silently=True)
+
 
 
 def login_view(request):

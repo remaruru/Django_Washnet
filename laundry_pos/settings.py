@@ -188,15 +188,18 @@ GOOGLE_OAUTH_REDIRECT_URI = os.environ.get(
 )
 
 
-# -- Email (Admin OTP) ---------------------------------------------------------
-# Locally (DEBUG=True): prints emails to the console -- no SMTP needed.
-# On Render (DEBUG=False): reads from environment variables.
+# ── Email (Admin OTP) ─────────────────────────────────────────────────────────
+# Locally (DEBUG=True): prints emails to the console — no SMTP needed.
+# On Render (DEBUG=False): Uses Brevo HTTP API to bypass port 587 blocks.
 
 if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
+BREVO_API_KEY       = os.environ.get('BREVO_API_KEY', '')
+
+# (These are kept for fallback if you upgrade Render in the future)
 EMAIL_HOST          = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT          = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS       = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
