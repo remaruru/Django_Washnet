@@ -61,9 +61,13 @@ def _send_otp_email(user, plain_code, purpose):
         }
         try:
             # We use a 10s timeout to ensure it doesn't freeze Gunicorn if Brevo is slow
-            requests.post(url, json=payload, headers=headers, timeout=10)
+            response = requests.post(url, json=payload, headers=headers, timeout=10)
+            if response.status_code not in (200, 201, 202):
+                print(f"[BREVO EMAIL ERROR] Status Code: {response.status_code}")
+                print(f"[BREVO EMAIL ERROR] Response Body: {response.text}")
+                print(f"[BREVO EMAIL ERROR] Payload Sent: {payload}")
         except Exception as e:
-            print(f"Brevo API Error: {e}")
+            print(f"[BREVO INTERNAL EXCEPTION] {e}")
     else:
         # Development: Print to console
         send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [recipient], fail_silently=True)
