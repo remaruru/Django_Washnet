@@ -864,4 +864,22 @@ p {
         max-height: 90vh !important;
         overflow-y: auto !important;
     }
+
+    /* 8. Rider bottom grid: force single column on mobile */
+    .rider-bottom-grid {
+        grid-template-columns: 1fr !important;
+        gap: var(--space-4) !important;
+    }
+
+    /* 9. Customer order card: prevent badge + price overflow */
+    .order-card-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: var(--space-2) !important;
+    }
+
+    .order-card-header > div:last-child {
+        align-self: flex-end;
+        text-align: right;
+    }
 }
