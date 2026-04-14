@@ -7,6 +7,7 @@ from django.db.models import Sum, Count, Q, F # type: ignore
 from django.db.models.functions import TruncDay, TruncMonth # type: ignore
 from django.urls import reverse # type: ignore
 import json
+import re
 import qrcode # type: ignore
 from io import BytesIO
 from django.core.files.base import ContentFile # type: ignore
@@ -119,9 +120,27 @@ def register_customer_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+        confirm  = request.POST.get('confirm_password')
         email = request.POST.get('email')
         phone_number = request.POST.get('phone_number')
         address = request.POST.get('address')
+
+        # --- Backend password strength enforcement ---
+        if not password or len(password) < 8:
+            messages.error(request, 'Password must be at least 8 characters long.')
+            return render(request, 'core/register.html')
+        if not re.search(r'[A-Z]', password):
+            messages.error(request, 'Password must contain at least one uppercase letter (A-Z).')
+            return render(request, 'core/register.html')
+        if not re.search(r'[a-z]', password):
+            messages.error(request, 'Password must contain at least one lowercase letter (a-z).')
+            return render(request, 'core/register.html')
+        if not re.search(r'[!@#$%^&*()\-_=+\[\]{};:\'"\\|,.<>/?`~]', password):
+            messages.error(request, 'Password must contain at least one symbol (e.g. ! @ # $ % ^ & *).')
+            return render(request, 'core/register.html')
+        if confirm != password:
+            messages.error(request, 'Passwords do not match.')
+            return render(request, 'core/register.html')
         
         if User.objects.filter(username=username).exists():
             messages.error(request, 'Username already exists.')

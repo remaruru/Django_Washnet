@@ -58,7 +58,7 @@
             {% endfor %}
         {% endif %}
 
-        <form method="POST" action="">
+        <form method="POST" action="" id="addUserForm">
             {% csrf_token %}
 
             {% if form.non_field_errors %}
@@ -71,7 +71,55 @@
                 {% for field in form %}
                     <div>
                         <label for="{{ field.id_for_label }}" style="display: block; font-size: 12px; font-weight: 900; color: var(--text-main); text-transform: uppercase; margin-bottom: 6px;">{{ field.label }} {% if field.field.required %}<span style="color: var(--error);">*</span>{% endif %}</label>
-                        {{ field }}
+
+                        {% if field.name == 'password1' %}
+                            <!-- Password 1 with eye toggle -->
+                            <div style="position: relative;">
+                                {{ field }}
+                                <button type="button" onclick="toggleAdminPw('id_password1','icon-pw1')" tabindex="-1"
+                                    style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:0; color:var(--primary); display:flex; align-items:center;">
+                                    <i data-feather="eye" id="icon-pw1" style="width:17px; height:17px;"></i>
+                                </button>
+                            </div>
+                            <!-- Password Requirements Card -->
+                            <div style="background: linear-gradient(135deg,#F5F3FF,#EDE9FE); border: 1.5px solid #DDD6FE; border-radius: 10px; padding: 12px 14px; margin-top: 10px;">
+                                <p style="font-size:0.72rem; font-weight:800; color:#5B21B6; margin:0 0 8px 0; text-transform:uppercase; letter-spacing:0.07em;">Password Requirements</p>
+                                <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:5px;">
+                                    <li id="adm-req-length" style="display:flex; align-items:center; gap:7px; font-size:0.79rem; font-weight:700; color:#94A3B8; transition:color 0.2s;">
+                                        <span id="adm-req-length-icon" style="width:16px;height:16px;border-radius:50%;background:#E2E8F0;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.2s;">
+                                            <svg width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3" fill="#CBD5E1"/></svg>
+                                        </span>
+                                        At least 8 characters
+                                    </li>
+                                    <li id="adm-req-upper" style="display:flex; align-items:center; gap:7px; font-size:0.79rem; font-weight:700; color:#94A3B8; transition:color 0.2s;">
+                                        <span id="adm-req-upper-icon" style="width:16px;height:16px;border-radius:50%;background:#E2E8F0;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.2s;">
+                                            <svg width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3" fill="#CBD5E1"/></svg>
+                                        </span>
+                                        At least one uppercase (A-Z) and one lowercase (a-z)
+                                    </li>
+                                    <li id="adm-req-symbol" style="display:flex; align-items:center; gap:7px; font-size:0.79rem; font-weight:700; color:#94A3B8; transition:color 0.2s;">
+                                        <span id="adm-req-symbol-icon" style="width:16px;height:16px;border-radius:50%;background:#E2E8F0;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.2s;">
+                                            <svg width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3" fill="#CBD5E1"/></svg>
+                                        </span>
+                                        At least one symbol (e.g. ! @ # $ % ^ &amp; *)
+                                    </li>
+                                </ul>
+                            </div>
+
+                        {% elif field.name == 'password2' %}
+                            <!-- Password 2 with eye toggle -->
+                            <div style="position: relative;">
+                                {{ field }}
+                                <button type="button" onclick="toggleAdminPw('id_password2','icon-pw2')" tabindex="-1"
+                                    style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:0; color:var(--primary); display:flex; align-items:center;">
+                                    <i data-feather="eye" id="icon-pw2" style="width:17px; height:17px;"></i>
+                                </button>
+                            </div>
+                            <span id="adm-confirm-hint" style="display:none; font-size:0.78rem; font-weight:700; margin-top:4px;"></span>
+
+                        {% else %}
+                            {{ field }}
+                        {% endif %}
                         
                         {% if field.help_text %}
                             <p style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin: 6px 0 0 0; line-height: 1.4;">{{ field.help_text }}</p>
@@ -96,10 +144,10 @@
 </div>
 
 <style>
-    /* Clean up the native inputs rendered since they now inherit .clay-input automatically from forms.py */
     .clay-input {
         width: 100%;
         box-sizing: border-box;
+        padding-right: 2.8rem; /* room for eye btn on password fields */
     }
     .clay-input:focus {
         border-color: var(--primary);
@@ -107,4 +155,63 @@
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
 </style>
+
+<script>
+function toggleAdminPw(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    const hidden = input.type === 'password';
+    input.type = hidden ? 'text' : 'password';
+    if (icon) {
+        icon.setAttribute('data-feather', hidden ? 'eye-off' : 'eye');
+        feather.replace();
+    }
+}
+
+function admSetReq(id, met) {
+    const li   = document.getElementById(id);
+    const icon = document.getElementById(id + '-icon');
+    if (!li || !icon) return;
+    if (met) {
+        li.style.color = '#16A34A';
+        icon.innerHTML = '<svg width="9" height="9" viewBox="0 0 10 10"><polyline points="2,5 4.5,7.5 8,2.5" stroke="#16A34A" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        icon.style.background = '#DCFCE7';
+    } else {
+        li.style.color = '#94A3B8';
+        icon.innerHTML = '<svg width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3" fill="#CBD5E1"/></svg>';
+        icon.style.background = '#E2E8F0';
+    }
+}
+
+const pw1 = document.getElementById('id_password1');
+const pw2 = document.getElementById('id_password2');
+
+if (pw1) {
+    pw1.addEventListener('input', function() {
+        const val = this.value;
+        admSetReq('adm-req-length', val.length >= 8);
+        admSetReq('adm-req-upper',  /[A-Z]/.test(val) && /[a-z]/.test(val));
+        admSetReq('adm-req-symbol', /[!@#$%^&*()\-_=+\[\]{};:'"\\|,.<>\/?`~]/.test(val));
+    });
+}
+
+if (pw2) {
+    pw2.addEventListener('input', function() {
+        const hint = document.getElementById('adm-confirm-hint');
+        if (!hint) return;
+        const pw1val = pw1 ? pw1.value : '';
+        if (this.value && this.value !== pw1val) {
+            hint.textContent = 'Passwords do not match.';
+            hint.style.display = 'block';
+            hint.style.color = '#DC2626';
+        } else if (this.value && this.value === pw1val) {
+            hint.textContent = '✓ Passwords match';
+            hint.style.display = 'block';
+            hint.style.color = '#16A34A';
+        } else {
+            hint.style.display = 'none';
+        }
+    });
+}
+</script>
 {% endblock %}

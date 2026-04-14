@@ -64,6 +64,18 @@
                         </span>
                         At least 8 characters
                     </li>
+                    <li id="req-upper" style="display:flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:700; color:#94A3B8; transition: color 0.2s;">
+                        <span id="req-upper-icon" style="width:18px; height:18px; border-radius:50%; background:#E2E8F0; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition: background 0.2s;">
+                            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3" fill="#CBD5E1"/></svg>
+                        </span>
+                        At least one uppercase (A-Z) and one lowercase (a-z) letter
+                    </li>
+                    <li id="req-symbol" style="display:flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:700; color:#94A3B8; transition: color 0.2s;">
+                        <span id="req-symbol-icon" style="width:18px; height:18px; border-radius:50%; background:#E2E8F0; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition: background 0.2s;">
+                            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3" fill="#CBD5E1"/></svg>
+                        </span>
+                        At least one symbol (e.g. ! @ # $ % ^ &amp; *)
+                    </li>
                 </ul>
             </div>
 
@@ -127,6 +139,8 @@
         document.getElementById('password').addEventListener('input', function() {
             const val = this.value;
             setReq('req-length', val.length >= 8);
+            setReq('req-upper',  /[A-Z]/.test(val) && /[a-z]/.test(val));
+            setReq('req-symbol', /[!@#$%^&*()\-_=+\[\]{};:'"\\|,.<>\/?`~]/.test(val));
         });
 
         // ── Form Submission Validation ───────────────────────────────────────────
@@ -182,6 +196,12 @@
                 valid = false;
             } else if (password.length < 8) {
                 showErr('password-err', 'Password must be at least 8 characters.');
+                valid = false;
+            } else if (!/[A-Z]/.test(password) || !/[a-z]/.test(password)) {
+                showErr('password-err', 'Password must contain uppercase and lowercase letters.');
+                valid = false;
+            } else if (!/[!@#$%^&*()\-_=+\[\]{};:'"\\|,.<>\/?`~]/.test(password)) {
+                showErr('password-err', 'Password must contain at least one symbol (e.g. ! @ # $).');
                 valid = false;
             }
 

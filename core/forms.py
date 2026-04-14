@@ -1,3 +1,4 @@
+import re
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
@@ -23,6 +24,27 @@ class CustomUserCreationForm(UserCreationForm):
         # Globally inject the standard `.clay-input` system styles across default widgets
         for field in self.fields.values():
             field.widget.attrs.update({'class': 'clay-input'})
+
+    def clean_password2(self):
+        """Enforce password strength rules on both the admin add-user form and all UserCreationForm subclasses."""
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+
+        # Let Django's built-in matching check run first
+        if password1 and password2 and password1 != password2:
+            raise ValidationError("The two password fields didn't match.")
+
+        if password1:
+            if len(password1) < 8:
+                raise ValidationError("Password must be at least 8 characters long.")
+            if not re.search(r'[A-Z]', password1):
+                raise ValidationError("Password must contain at least one uppercase letter (A-Z).")
+            if not re.search(r'[a-z]', password1):
+                raise ValidationError("Password must contain at least one lowercase letter (a-z).")
+            if not re.search(r'[!@#$%^&*()\-_=+\[\]{};:\'"\\|,.<>/?`~]', password1):
+                raise ValidationError("Password must contain at least one symbol (e.g. ! @ # $ % ^ & *).")
+
+        return password2
 
     def clean_role(self):
         role = self.cleaned_data.get('role')
