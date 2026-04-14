@@ -19,34 +19,39 @@
     </div>
 
     <div class="clay-auth-card" style="text-align: left; padding: 2.5rem 2rem;">
-        <form method="POST" action="{% url 'register' %}">
+        <form method="POST" action="{% url 'register' %}" id="registerForm" novalidate>
             {% csrf_token %}
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6);">
                 <div class="form-group" style="margin: 0;">
                     <label for="username" class="form-label" style="font-weight: 800; color: #334155; margin-bottom: var(--space-3);">Username</label>
-                    <input type="text" id="username" name="username" class="clay-auth-input" style="font-weight: 600;" placeholder="Choose username" required autocomplete="username">
+                    <input type="text" id="username" name="username" class="clay-auth-input" style="font-weight: 600;" placeholder="Choose username" autocomplete="username">
+                    <span id="username-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px;"></span>
                 </div>
                 <div class="form-group" style="margin: 0;">
                     <label for="email" class="form-label" style="font-weight: 800; color: #334155; margin-bottom: var(--space-3);">Email Address</label>
-                    <input type="email" id="email" name="email" class="clay-auth-input" style="font-weight: 600;" placeholder="you@example.com" required autocomplete="email">
+                    <input type="email" id="email" name="email" class="clay-auth-input" style="font-weight: 600;" placeholder="you@example.com" autocomplete="email">
+                    <span id="email-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px;"></span>
                 </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6);">
                 <div class="form-group" style="margin: 0;">
                     <label for="phone_number" class="form-label" style="font-weight: 800; color: #334155; margin-bottom: var(--space-3);">Phone Number</label>
-                    <input type="tel" id="phone_number" name="phone_number" class="clay-auth-input" style="font-weight: 600;" placeholder="0917..." required autocomplete="tel">
+                    <input type="tel" id="phone_number" name="phone_number" class="clay-auth-input" style="font-weight: 600;" placeholder="09XXXXXXXXX" autocomplete="tel">
+                    <span id="phone-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px;"></span>
                 </div>
                 <div class="form-group" style="margin: 0;">
                     <label for="password" class="form-label" style="font-weight: 800; color: #334155; margin-bottom: var(--space-3);">Password</label>
-                    <input type="password" id="password" name="password" class="clay-auth-input" style="font-weight: 600;" placeholder="••••••••" required autocomplete="new-password">
+                    <input type="password" id="password" name="password" class="clay-auth-input" style="font-weight: 600;" placeholder="••••••••" autocomplete="new-password">
+                    <span id="password-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px;"></span>
                 </div>
             </div>
 
             <div class="form-group" style="margin-bottom: var(--space-6);">
                 <label for="address" class="form-label" style="font-weight: 800; color: #334155; margin-bottom: var(--space-3);">Delivery Address</label>
-                <textarea id="address" name="address" class="clay-auth-input" style="font-weight: 600;" rows="2" placeholder="Full address for rider logistics" required></textarea>
+                <textarea id="address" name="address" class="clay-auth-input" style="font-weight: 600;" rows="2" placeholder="Full address for rider logistics"></textarea>
+                <span id="address-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px;"></span>
             </div>
 
             <div style="margin-top: 2rem;">
@@ -55,6 +60,70 @@
                 </button>
             </div>
         </form>
+
+        <script>
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            let valid = true;
+
+            function showErr(id, msg) {
+                const el = document.getElementById(id);
+                el.textContent = msg;
+                el.style.display = 'block';
+            }
+            function clearErr(id) {
+                const el = document.getElementById(id);
+                el.textContent = '';
+                el.style.display = 'none';
+            }
+
+            const username = document.getElementById('username').value.trim();
+            const email    = document.getElementById('email').value.trim();
+            const phone    = document.getElementById('phone_number').value.trim();
+            const password = document.getElementById('password').value;
+            const address  = document.getElementById('address').value.trim();
+
+            ['username-err','email-err','phone-err','password-err','address-err'].forEach(clearErr);
+
+            if (!username) {
+                showErr('username-err', 'Username is required.');
+                valid = false;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email) {
+                showErr('email-err', 'Email is required.');
+                valid = false;
+            } else if (!emailRegex.test(email)) {
+                showErr('email-err', 'Please enter a valid email address.');
+                valid = false;
+            }
+
+            // PH number: 09XXXXXXXXX (11 digits) or +639XXXXXXXXX
+            const phoneRegex = /^(09\d{9}|\+639\d{9})$/;
+            if (!phone) {
+                showErr('phone-err', 'Phone number is required.');
+                valid = false;
+            } else if (!phoneRegex.test(phone)) {
+                showErr('phone-err', 'Enter a valid PH number (e.g. 09171234567).');
+                valid = false;
+            }
+
+            if (!password) {
+                showErr('password-err', 'Password is required.');
+                valid = false;
+            } else if (password.length < 8) {
+                showErr('password-err', 'Password must be at least 8 characters.');
+                valid = false;
+            }
+
+            if (!address) {
+                showErr('address-err', 'Delivery address is required.');
+                valid = false;
+            }
+
+            if (!valid) e.preventDefault();
+        });
+        </script>
 
         <div style="margin: var(--space-6) 0; display: flex; align-items: center; text-align: center; color: var(--text-muted);">
             <div style="flex: 1; height: 1px; background-color: #E2E8F0;"></div>

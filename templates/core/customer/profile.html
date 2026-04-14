@@ -28,7 +28,7 @@
     </div>
 
     <div class="clay-card" style="max-width: 600px; padding: var(--space-6);">
-        <form method="POST" action="{% url 'customer_profile' %}">
+        <form method="POST" action="{% url 'customer_profile' %}" id="profileForm" novalidate>
             {% csrf_token %}
             
             <div style="margin-bottom: var(--space-6);">
@@ -39,16 +39,18 @@
                     <label style="display: block; font-size: 13px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Contact Number</label>
                     <div style="position: relative;">
                         <i data-feather="phone" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted);"></i>
-                        <input type="text" name="phone_number" value="{{ user.phone_number|default_if_none:'' }}" class="clay-input" style="padding-left: 44px; width: 100%; box-sizing: border-box;" placeholder="09XX..." required>
+                        <input type="text" id="profile_phone" name="phone_number" value="{{ user.phone_number|default_if_none:'' }}" class="clay-input" style="padding-left: 44px; width: 100%; box-sizing: border-box;" placeholder="09XXXXXXXXX">
                     </div>
+                    <span id="profile-phone-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px;"></span>
                 </div>
 
                 <div style="margin-bottom: var(--space-4);">
                     <label style="display: block; font-size: 13px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Delivery Address</label>
                     <div style="position: relative;">
                         <i data-feather="map-pin" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted);"></i>
-                        <input type="text" name="address" value="{{ user.address|default_if_none:'' }}" class="clay-input" style="padding-left: 44px; width: 100%; box-sizing: border-box;" placeholder="Street, Brgy, City" required>
+                        <input type="text" id="profile_address" name="address" value="{{ user.address|default_if_none:'' }}" class="clay-input" style="padding-left: 44px; width: 100%; box-sizing: border-box;" placeholder="Street, Brgy, City">
                     </div>
+                    <span id="profile-address-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px;"></span>
                 </div>
 
                 <div style="margin-bottom: var(--space-4);">
@@ -66,5 +68,45 @@
                 </button>
             </div>
         </form>
+
+        <script>
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            let valid = true;
+
+            function showErr(id, msg) {
+                const el = document.getElementById(id);
+                el.textContent = msg;
+                el.style.display = 'block';
+            }
+            function clearErr(id) {
+                const el = document.getElementById(id);
+                el.textContent = '';
+                el.style.display = 'none';
+            }
+
+            const phone   = document.getElementById('profile_phone').value.trim();
+            const address = document.getElementById('profile_address').value.trim();
+
+            clearErr('profile-phone-err');
+            clearErr('profile-address-err');
+
+            // PH number: 09XXXXXXXXX (11 digits) or +639XXXXXXXXX
+            const phoneRegex = /^(09\d{9}|\+639\d{9})$/;
+            if (!phone) {
+                showErr('profile-phone-err', 'Contact number is required.');
+                valid = false;
+            } else if (!phoneRegex.test(phone)) {
+                showErr('profile-phone-err', 'Enter a valid PH number (e.g. 09171234567).');
+                valid = false;
+            }
+
+            if (!address) {
+                showErr('profile-address-err', 'Delivery address is required.');
+                valid = false;
+            }
+
+            if (!valid) e.preventDefault();
+        });
+        </script>
     </div>
 {% endblock %}

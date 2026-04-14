@@ -19,24 +19,60 @@
     </div>
 
     <div class="clay-auth-card" style="text-align: left; padding: var(--space-12) var(--space-8);">
-        <form method="POST" action="{% url 'login' %}">
+        <form method="POST" action="{% url 'login' %}" id="loginForm" novalidate>
             {% csrf_token %}
             <div class="form-group" style="margin-bottom: var(--space-6);">
                 <label for="username" class="form-label" style="font-weight: 800; color: var(--text-main); margin-bottom: var(--space-3);">Username</label>
-                <input type="text" id="username" name="username" class="clay-auth-input" style="font-weight: 600;" placeholder="your_username" required autocomplete="username" autofocus>
+                <input type="text" id="username" name="username" class="clay-auth-input" style="font-weight: 600;" placeholder="your_username" autocomplete="username" autofocus>
+                <span id="username-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px; display:none;"></span>
             </div>
 
             <div class="form-group" style="margin-bottom: var(--space-8);">
                 <div style="margin-bottom: var(--space-3);">
                     <label for="password" class="form-label" style="margin: 0; font-weight: 800; color: var(--text-main);">Password</label>
                 </div>
-                <input type="password" id="password" name="password" class="clay-auth-input" style="font-weight: 600;" placeholder="••••••••" required autocomplete="current-password">
+                <input type="password" id="password" name="password" class="clay-auth-input" style="font-weight: 600;" placeholder="••••••••" autocomplete="current-password">
+                <span id="password-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px;"></span>
             </div>
 
             <button type="submit" class="clay-auth-btn" style="width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 900; letter-spacing: 0.02em;">
                 Log In <i data-feather="arrow-right" style="width: 18px; height: 18px;"></i>
             </button>
         </form>
+
+        <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            let valid = true;
+
+            function showErr(id, msg) {
+                const el = document.getElementById(id);
+                el.textContent = msg;
+                el.style.display = 'block';
+            }
+            function clearErr(id) {
+                const el = document.getElementById(id);
+                el.textContent = '';
+                el.style.display = 'none';
+            }
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            clearErr('username-err');
+            clearErr('password-err');
+
+            if (!username) {
+                showErr('username-err', 'Username is required.');
+                valid = false;
+            }
+            if (!password) {
+                showErr('password-err', 'Password is required.');
+                valid = false;
+            }
+
+            if (!valid) e.preventDefault();
+        });
+        </script>
 
         <div style="margin: var(--space-6) 0; display: flex; align-items: center; text-align: center; color: var(--text-muted);">
             <div style="flex: 1; height: 1px; background-color: #E2E8F0;"></div>
