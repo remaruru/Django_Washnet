@@ -20,6 +20,12 @@ class CustomUserCreationForm(UserCreationForm):
                 choice for choice in User.RoleChoices.choices 
                 if choice[0] != User.RoleChoices.ADMIN
             ]
+            
+        # Clean up default help text from password fields since we have our custom UI
+        if 'password1' in self.fields:
+            self.fields['password1'].help_text = ''
+        if 'password2' in self.fields:
+            self.fields['password2'].help_text = ''
         
         # Globally inject the standard `.clay-input` system styles across default widgets
         for field in self.fields.values():
