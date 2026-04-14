@@ -35,17 +35,49 @@
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6);">
-                <div class="form-group" style="margin: 0;">
-                    <label for="phone_number" class="form-label" style="font-weight: 800; color: #334155; margin-bottom: var(--space-3);">Phone Number</label>
-                    <input type="tel" id="phone_number" name="phone_number" class="clay-auth-input" style="font-weight: 600;" placeholder="09XXXXXXXXX" autocomplete="tel">
-                    <span id="phone-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px;"></span>
+            <div class="form-group" style="margin-bottom: var(--space-6);">
+                <label for="phone_number" class="form-label" style="font-weight: 800; color: #334155; margin-bottom: var(--space-3);">Phone Number</label>
+                <input type="tel" id="phone_number" name="phone_number" class="clay-auth-input" style="font-weight: 600;" placeholder="09XXXXXXXXX" autocomplete="tel">
+                <span id="phone-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px;"></span>
+            </div>
+
+            <!-- Password Field with Eye Toggle -->
+            <div class="form-group" style="margin-bottom: var(--space-3);">
+                <label for="password" class="form-label" style="font-weight: 800; color: #334155; margin-bottom: var(--space-3);">Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="password" name="password" class="clay-auth-input" style="font-weight: 600; padding-right: 3rem;" placeholder="••••••••" autocomplete="new-password">
+                    <button type="button" id="toggle-password" onclick="toggleVisibility('password','toggle-password')" tabindex="-1"
+                        style="position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:0; color:#7C3AED; display:flex; align-items:center;">
+                        <i data-feather="eye" id="toggle-password-icon" style="width:18px; height:18px;"></i>
+                    </button>
                 </div>
-                <div class="form-group" style="margin: 0;">
-                    <label for="password" class="form-label" style="font-weight: 800; color: #334155; margin-bottom: var(--space-3);">Password</label>
-                    <input type="password" id="password" name="password" class="clay-auth-input" style="font-weight: 600;" placeholder="••••••••" autocomplete="new-password">
-                    <span id="password-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px;"></span>
+                <span id="password-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px;"></span>
+            </div>
+
+            <!-- Password Requirements Checklist -->
+            <div id="pw-requirements" style="background: linear-gradient(135deg,#F5F3FF,#EDE9FE); border: 1.5px solid #DDD6FE; border-radius: 12px; padding: 14px 16px; margin-bottom: var(--space-6);">
+                <p style="font-size:0.75rem; font-weight:800; color:#5B21B6; margin:0 0 10px 0; text-transform:uppercase; letter-spacing:0.07em;">Password Requirements</p>
+                <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px;">
+                    <li id="req-length" style="display:flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:700; color:#94A3B8; transition: color 0.2s;">
+                        <span id="req-length-icon" style="width:18px; height:18px; border-radius:50%; background:#E2E8F0; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition: background 0.2s;">
+                            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3" fill="#CBD5E1"/></svg>
+                        </span>
+                        At least 8 characters
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Confirm Password Field with Eye Toggle -->
+            <div class="form-group" style="margin-bottom: var(--space-6);">
+                <label for="confirm_password" class="form-label" style="font-weight: 800; color: #334155; margin-bottom: var(--space-3);">Confirm Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="confirm_password" name="confirm_password" class="clay-auth-input" style="font-weight: 600; padding-right: 3rem;" placeholder="••••••••" autocomplete="new-password">
+                    <button type="button" id="toggle-confirm" onclick="toggleVisibility('confirm_password','toggle-confirm')" tabindex="-1"
+                        style="position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:0; color:#7C3AED; display:flex; align-items:center;">
+                        <i data-feather="eye" id="toggle-confirm-icon" style="width:18px; height:18px;"></i>
+                    </button>
                 </div>
+                <span id="confirm-err" style="display:none; color:#DC2626; font-size:0.8rem; font-weight:700; margin-top:4px;"></span>
             </div>
 
             <div class="form-group" style="margin-bottom: var(--space-6);">
@@ -62,6 +94,42 @@
         </form>
 
         <script>
+        // ── Eye Toggle ──────────────────────────────────────────────────────────
+        function toggleVisibility(inputId, btnId) {
+            const input = document.getElementById(inputId);
+            const btn   = document.getElementById(btnId);
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            // Swap feather icon
+            const iconId = btnId + '-icon';
+            const iconEl = document.getElementById(iconId);
+            if (iconEl) {
+                iconEl.setAttribute('data-feather', isHidden ? 'eye-off' : 'eye');
+                feather.replace();
+            }
+        }
+
+        // ── Live Password Requirements ───────────────────────────────────────────
+        function setReq(id, met) {
+            const li   = document.getElementById(id);
+            const icon = document.getElementById(id + '-icon');
+            if (met) {
+                li.style.color = '#16A34A';
+                icon.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10"><polyline points="2,5 4.5,7.5 8,2.5" stroke="#16A34A" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                icon.style.background = '#DCFCE7';
+            } else {
+                li.style.color = '#94A3B8';
+                icon.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3" fill="#CBD5E1"/></svg>';
+                icon.style.background = '#E2E8F0';
+            }
+        }
+
+        document.getElementById('password').addEventListener('input', function() {
+            const val = this.value;
+            setReq('req-length', val.length >= 8);
+        });
+
+        // ── Form Submission Validation ───────────────────────────────────────────
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             let valid = true;
 
@@ -80,9 +148,10 @@
             const email    = document.getElementById('email').value.trim();
             const phone    = document.getElementById('phone_number').value.trim();
             const password = document.getElementById('password').value;
+            const confirm  = document.getElementById('confirm_password').value;
             const address  = document.getElementById('address').value.trim();
 
-            ['username-err','email-err','phone-err','password-err','address-err'].forEach(clearErr);
+            ['username-err','email-err','phone-err','password-err','confirm-err','address-err'].forEach(clearErr);
 
             if (!username) {
                 showErr('username-err', 'Username is required.');
@@ -116,12 +185,37 @@
                 valid = false;
             }
 
+            if (!confirm) {
+                showErr('confirm-err', 'Please confirm your password.');
+                valid = false;
+            } else if (confirm !== password) {
+                showErr('confirm-err', 'Passwords do not match.');
+                valid = false;
+            }
+
             if (!address) {
                 showErr('address-err', 'Delivery address is required.');
                 valid = false;
             }
 
             if (!valid) e.preventDefault();
+        });
+
+        // ── Live Confirm Password Match Indicator ────────────────────────────────
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            const pw  = document.getElementById('password').value;
+            const err = document.getElementById('confirm-err');
+            if (this.value && this.value !== pw) {
+                err.textContent = 'Passwords do not match.';
+                err.style.display = 'block';
+                err.style.color = '#DC2626';
+            } else if (this.value && this.value === pw) {
+                err.textContent = '✓ Passwords match';
+                err.style.display = 'block';
+                err.style.color = '#16A34A';
+            } else {
+                err.style.display = 'none';
+            }
         });
         </script>
 

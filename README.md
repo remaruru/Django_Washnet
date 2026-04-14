@@ -131,6 +131,7 @@ The system leverages Google Generative AI with role-aware database tooling:
 - **QR Token Receipts** — 12-character cryptographically random tokens on every order receipt.
 - **Production HTTPS Enforcement** — HSTS, secure cookies, and SSL redirect active when `DEBUG=False`.
 - **CSRF Protection** — Trusted origins enforced for all form submissions and OAuth callbacks.
+- **Register Page Password UX** — Live password requirements checklist (minimum 8 characters), confirm password field with real-time match indicator, and eye-toggle buttons on both password fields.
 
 ---
 
