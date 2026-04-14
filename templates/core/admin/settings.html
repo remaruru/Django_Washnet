@@ -1,9 +1,45 @@
-{% extends 'core/admin/dashboard.html' %}
+{% extends 'base_dashboard.html' %}
 {% load static %}
 
 {% block title %}Admin Settings - WASHNET{% endblock %}
 
+{% block sidebar_nav %}
+    <p style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2); padding: 0 var(--space-4); margin-top: var(--space-2);">Management</p>
+    <a href="{% url 'admin_dashboard' %}" class="sidebar-link" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
+        <i data-feather="bar-chart-2" style="width: 18px; height: 18px;"></i> Overview
+    </a>
+    <a href="{% url 'admin_analytics' %}" class="sidebar-link" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
+        <i data-feather="pie-chart" style="width: 18px; height: 18px;"></i> Analytics
+    </a>
+    <a href="{% url 'admin_queue' %}" class="sidebar-link" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
+        <i data-feather="list" style="width: 18px; height: 18px;"></i> Machine Queue
+    </a>
+    <a href="{% url 'admin_payments' %}" class="sidebar-link" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
+        <i data-feather="dollar-sign" style="width: 18px; height: 18px;"></i> Payments
+    </a>
+    <a href="{% url 'admin_users' %}" class="sidebar-link" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
+        <i data-feather="users" style="width: 18px; height: 18px;"></i> Users / Staff
+    </a>
+    <a href="{% url 'admin_settings' %}" class="sidebar-link active" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--primary); background: var(--primary-light); font-weight: 700;">
+        <i data-feather="settings" style="width: 18px; height: 18px;"></i> Settings
+    </a>
+{% endblock %}
+
 {% block header_title %}Security Settings{% endblock %}
+
+{% block header_actions %}
+<div style="display: flex; align-items: center; gap: var(--space-6);" class="header-custom-actions">
+    <div class="header-user-profile" style="display: flex; align-items: center; gap: var(--space-3);">
+        <div style="text-align: right;">
+            <p style="font-size: var(--text-sm); font-weight: 800; color: var(--text-main); margin: 0;">{{ user.username }}</p>
+            <p style="font-size: var(--text-xs); font-weight: 800; color: var(--primary); margin: 0; letter-spacing: 0.05em; text-transform: uppercase;">Administrator</p>
+        </div>
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; box-shadow: var(--shadow-clay-card);">
+            {{ user.username|make_list|first|upper }}
+        </div>
+    </div>
+</div>
+{% endblock %}
 
 {% block content %}
 <div style="padding-bottom: var(--space-12);">

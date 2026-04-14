@@ -22,6 +22,9 @@
     <a href="{% url 'admin_users' %}" class="sidebar-link active" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--primary); background: var(--primary-light); font-weight: 700;">
         <i data-feather="users" style="width: 18px; height: 18px;"></i> Users / Staff
     </a>
+    <a href="{% url 'admin_settings' %}" class="sidebar-link" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
+        <i data-feather="settings" style="width: 18px; height: 18px;"></i> Settings
+    </a>
 {% endblock %}
 
 {% block header_actions %}
