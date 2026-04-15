@@ -171,7 +171,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # ── AI Chatbot ────────────────────────────────────────────────────────────────
 
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+
 
 
 # ── Google OAuth ──────────────────────────────────────────────────────────────

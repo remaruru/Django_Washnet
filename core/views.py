@@ -1672,8 +1672,8 @@ SYSTEM_PROMPTS = {
     ),
 }
 
-# Gemini function declarations per role (what the model is told it can call)
-GEMINI_TOOLS = {
+# AI function declarations per role (what the model is told it can call)
+AI_TOOLS = {
     "ANONYMOUS": [
         {"name": "faq", "description": "Answer a frequently asked question about the laundry service.", "parameters": {"type": "object", "properties": {"topic": {"type": "string", "description": "The FAQ topic (e.g. hours, delivery, payment, how_to_order, services)"}}, "required": ["topic"]}},
         {"name": "estimate_price", "description": "Estimate the cost for a laundry service given a service name and weight in kg.", "parameters": {"type": "object", "properties": {"service_name": {"type": "string"}, "quantity_kg": {"type": "number"}}, "required": ["service_name", "quantity_kg"]}},
@@ -1704,7 +1704,7 @@ GEMINI_TOOLS = {
 }
 
 # Admin gets all employee tools plus extra
-GEMINI_TOOLS["ADMIN"] = GEMINI_TOOLS["EMPLOYEE"] + [
+AI_TOOLS["ADMIN"] = AI_TOOLS["EMPLOYEE"] + [
     {"name": "get_orders_summary", "description": "Get total order counts for a period (today/week/month).", "parameters": {"type": "object", "properties": {"period": {"type": "string", "description": "today, week, or month"}}, "required": ["period"]}},
     {"name": "get_revenue_summary", "description": "Get revenue totals for a period.", "parameters": {"type": "object", "properties": {"period": {"type": "string"}}, "required": ["period"]}},
     {"name": "get_payment_breakdown", "description": "Get Cash vs GCash vs PayPal breakdown for a period.", "parameters": {"type": "object", "properties": {"period": {"type": "string"}}, "required": ["period"]}},
@@ -1744,14 +1744,14 @@ def chatbot_api(request):
 
     allowed_tools = TOOL_REGISTRY.get(role, TOOL_REGISTRY["ANONYMOUS"])
     system_prompt = SYSTEM_PROMPTS.get(role, SYSTEM_PROMPTS["ANONYMOUS"])
-    gemini_tool_declarations = GEMINI_TOOLS.get(role, GEMINI_TOOLS["ANONYMOUS"])
+    tool_declarations = AI_TOOLS.get(role, AI_TOOLS["ANONYMOUS"])
 
-    api_key = getattr(settings, "GEMINI_API_KEY", "")
+    api_key = getattr(settings, "GROQ_API_KEY", "")
 
     # ── STUB MODE (no API key yet) ──────────────────────────────
     if not api_key:
         stub_reply = (
-            f"[STUB MODE — Gemini API key not configured] "
+            f"[STUB MODE — Groq API key not configured] "
             f"Hi {username}! I'm the Washnet AI assistant. "
             f"Your role is '{role}' — you have access to {len(allowed_tools)} tool(s): "
             f"{', '.join(allowed_tools.keys())}. "
@@ -1759,96 +1759,94 @@ def chatbot_api(request):
         )
         return JsonResponse({"reply": stub_reply})
 
-    # ── LIVE GEMINI MODE ────────────────────────────────────────
+    # ── LIVE GROQ MODE ────────────────────────────────────────
     try:
-        import google.generativeai as genai   # type: ignore
+        from groq import Groq
 
-        genai.configure(api_key=api_key)
+        client = Groq(api_key=api_key)
 
-        # Build Gemini tool objects from declarations
-        tool_objects = genai.protos.Tool(
-            function_declarations=[
-                genai.protos.FunctionDeclaration(
-                    name=t["name"],
-                    description=t["description"],
-                    parameters=genai.protos.Schema(
-                        type=genai.protos.Type.OBJECT,
-                        properties={
-                            k: genai.protos.Schema(type=genai.protos.Type.STRING if v.get("type") == "string" else genai.protos.Type.NUMBER)
-                            for k, v in t.get("parameters", {}).get("properties", {}).items()
-                        },
-                        required=t.get("parameters", {}).get("required", []),
-                    ) if t.get("parameters", {}).get("properties") else None,
-                )
-                for t in gemini_tool_declarations
-            ]
-        )
+        # Build Groq tool objects from declarations
+        tools = [
+            {"type": "function", "function": t}
+            for t in tool_declarations
+        ]
 
-        model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash-lite",
-            system_instruction=system_prompt,
-            tools=[tool_objects],
-        )
-
-        # Rebuild conversation history for Gemini
-        chat_history = []
+        # Rebuild conversation history for Groq
+        chat_history = [{"role": "system", "content": system_prompt}]
         for msg in history[-10:]:   # keep last 10 turns max
+            chat_role = msg.get("role", "user")
+            if chat_role == "model":
+                chat_role = "assistant"
             chat_history.append({
-                "role": msg.get("role", "user"),
-                "parts": [{"text": msg.get("text", "")}],
+                "role": chat_role,
+                "content": msg.get("text", "")
             })
-
-        chat = model.start_chat(history=chat_history)
-        response = chat.send_message(user_message)
+            
+        # Add current message
+        chat_history.append({"role": "user", "content": user_message})
 
         # ── Function calling loop ───────────────────────────────
         max_rounds = 5
         rounds = 0
+        final_text = ""
+        
         while rounds < max_rounds:
             rounds += 1
-            fn_calls = [p.function_call for p in response.parts if hasattr(p, "function_call") and p.function_call.name]
-            if not fn_calls:
+            
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=chat_history,
+                tools=tools,
+                tool_choice="auto"
+            )
+            
+            response_message = response.choices[0].message
+            
+            if response_message.tool_calls:
+                # Add the assistant's request to call tools to history
+                chat_history.append(response_message.model_dump(exclude_unset=True))
+                
+                for tool_call in response_message.tool_calls:
+                    fn_name = tool_call.function.name
+                    fn_args_str = tool_call.function.arguments
+                    try:
+                        fn_args = json.loads(fn_args_str)
+                    except json.JSONDecodeError:
+                        fn_args = {}
+
+                    # Security: verify this tool is actually allowed for this role
+                    if fn_name not in allowed_tools:
+                        fn_result = {"error": f"Tool '{fn_name}' is not available for your role."}
+                    else:
+                        tool_fn = allowed_tools[fn_name]
+                        # Inject customer_user
+                        if fn_name in ["track_order", "get_my_orders"] and role in ["CUSTOMER", "EMPLOYEE", "ADMIN"]:
+                            fn_args["customer_user"] = request.user
+                        try:
+                            fn_result = tool_fn(**fn_args)
+                        except Exception as e:
+                            fn_result = {"error": f"Tool execution error: {str(e)}"}
+
+                    # Add tool response to history
+                    chat_history.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "name": fn_name,
+                        "content": json.dumps(fn_result)
+                    })
+            else:
+                final_text = response_message.content
                 break
 
-            fn_responses = []
-            for fn_call in fn_calls:
-                fn_name = fn_call.name
-                fn_args = dict(fn_call.args)
-
-                # Security: verify this tool is actually allowed for this role
-                if fn_name not in allowed_tools:
-                    fn_result = {"error": f"Tool '{fn_name}' is not available for your role."}
-                else:
-                    tool_fn = allowed_tools[fn_name]
-                    # Inject customer_user
-                    if fn_name in ["track_order", "get_my_orders"] and role in ["CUSTOMER", "EMPLOYEE", "ADMIN"]:
-                        fn_args["customer_user"] = request.user
-                    try:
-                        fn_result = tool_fn(**fn_args)
-                    except Exception as e:
-                        fn_result = {"error": f"Tool execution error: {str(e)}"}
-
-                fn_responses.append(
-                    genai.protos.Part(
-                        function_response=genai.protos.FunctionResponse(
-                            name=fn_name,
-                            response={"result": fn_result},
-                        )
-                    )
-                )
-
-            response = chat.send_message(fn_responses)
-
-        final_text = "".join(p.text for p in response.parts if hasattr(p, "text") and p.text)
         return JsonResponse({"reply": final_text or "Sorry, I couldn't generate a response. Please try again."})
 
     except Exception as e:
         import traceback
         traceback.print_exc()
         
-        # Gracefully handle Google API rate limits to provide a clean UX
+        # Gracefully handle API rate limits to provide a clean UX
         error_msg = str(e)
-        if "429" in error_msg or "Quota exceeded" in error_msg:
+        if "429" in error_msg or "rate limit" in error_msg.lower():
             return JsonResponse({"reply": "I'm currently busy with too many requests! Please wait a moment and try again."})
         
         return JsonResponse({"reply": f"An error occurred: {error_msg}"}, status=500)

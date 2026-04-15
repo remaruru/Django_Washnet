@@ -16,7 +16,7 @@ xlsxwriter==3.2.9
 colorama==0.4.6
 
 # ── AI / Google APIs ──────────────────────────────────────────────────────────
-google-generativeai==0.8.6
+groq==1.1.2
 google-api-python-client==2.193.0
 google-auth==2.49.1
 google-auth-httplib2==0.3.1
