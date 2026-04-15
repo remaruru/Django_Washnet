@@ -108,8 +108,8 @@ class ServiceAdmin(admin.ModelAdmin):
 
     def active_badge(self, obj):
         if obj.is_active:
-            return format_html('<span style="color:#27ae60;font-weight:bold">✔ Active</span>')
-        return format_html('<span style="color:#c0392b;font-weight:bold">✘ Inactive</span>')
+            return format_html('<span style="color:#27ae60;font-weight:bold">{}</span>', '✔ Active')
+        return format_html('<span style="color:#c0392b;font-weight:bold">{}</span>', '✘ Inactive')
     active_badge.short_description = "Status"
 
 
@@ -128,10 +128,10 @@ class ProductAdmin(admin.ModelAdmin):
 
     def stock_status(self, obj):
         if obj.stock <= 0:
-            return format_html('<span style="color:#c0392b;font-weight:bold">Out of Stock</span>')
+            return format_html('<span style="color:#c0392b;font-weight:bold">{}</span>', 'Out of Stock')
         elif obj.stock <= 10:
             return format_html('<span style="color:#e67e22;font-weight:bold">Low ({})</span>', obj.stock)
-        return format_html('<span style="color:#27ae60;font-weight:bold">OK</span>')
+        return format_html('<span style="color:#27ae60;font-weight:bold">{}</span>', 'OK')
     stock_status.short_description = "Stock Level"
 
 
@@ -200,8 +200,8 @@ class OrderAdmin(admin.ModelAdmin):
 
     def payment_badge(self, obj):
         if obj.payment_status == 'PAID':
-            return format_html('<span style="color:#27ae60;font-weight:bold">✔ Paid</span>')
-        return format_html('<span style="color:#c0392b;font-weight:bold">✘ Unpaid</span>')
+            return format_html('<span style="color:#27ae60;font-weight:bold">{}</span>', '✔ Paid')
+        return format_html('<span style="color:#c0392b;font-weight:bold">{}</span>', '✘ Unpaid')
     payment_badge.short_description = "Payment"
 
 

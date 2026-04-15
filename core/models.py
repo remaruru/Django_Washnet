@@ -120,7 +120,8 @@ class Order(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Order #{self.id} - {self.customer.username} - {self.get_status_display()}"
+        customer_name = self.customer.username if self.customer else (self.walkin_name or "Walk-in")
+        return f"Order #{self.id} - {customer_name} - {self.get_status_display()}"
 
     @property
     def status_choices_list(self):
