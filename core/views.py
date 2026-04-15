@@ -1673,42 +1673,70 @@ SYSTEM_PROMPTS = {
 }
 
 # AI function declarations per role (what the model is told it can call)
+def _tool(name, description, params=None, required=None):
+    """Helper to build a clean tool declaration, omitting parameters for no-arg tools."""
+    t = {"name": name, "description": description}
+    if params:
+        t["parameters"] = {
+            "type": "object",
+            "properties": params,
+        }
+        if required:
+            t["parameters"]["required"] = required
+    else:
+        # No parameters — omit the key entirely to avoid confusing the model
+        t["parameters"] = {"type": "object", "properties": {}}
+    return t
+
+
 AI_TOOLS = {
     "ANONYMOUS": [
-        {"name": "faq", "description": "Answer a frequently asked question about the laundry service.", "parameters": {"type": "object", "properties": {"topic": {"type": "string", "description": "The FAQ topic (e.g. hours, delivery, payment, how_to_order, services)"}}, "required": ["topic"]}},
-        {"name": "estimate_price", "description": "Estimate the cost for a laundry service given a service name and weight in kg.", "parameters": {"type": "object", "properties": {"service_name": {"type": "string"}, "quantity_kg": {"type": "number"}}, "required": ["service_name", "quantity_kg"]}},
-        {"name": "get_all_services", "description": "Return all active services and their prices.", "parameters": {"type": "object", "properties": {}}},
+        _tool("faq", "Answer a frequently asked question about the laundry service.",
+              {"topic": {"type": "string", "description": "The FAQ topic (e.g. hours, delivery, payment, how_to_order, services)"}}, ["topic"]),
+        _tool("estimate_price", "Estimate the cost for a laundry service given a service name and weight in kg.",
+              {"service_name": {"type": "string"}, "quantity_kg": {"type": "number"}}, ["service_name", "quantity_kg"]),
+        _tool("get_all_services", "Return all active laundry services and their prices."),
     ],
     "CUSTOMER": [
-        {"name": "faq", "description": "Answer a frequently asked question about the laundry service.", "parameters": {"type": "object", "properties": {"topic": {"type": "string"}}, "required": ["topic"]}},
-        {"name": "estimate_price", "description": "Estimate the cost for a laundry service.", "parameters": {"type": "object", "properties": {"service_name": {"type": "string"}, "quantity_kg": {"type": "number"}}, "required": ["service_name", "quantity_kg"]}},
-        {"name": "get_all_services", "description": "Return all active services and their prices.", "parameters": {"type": "object", "properties": {}}},
-        {"name": "get_my_orders", "description": "Return all recent orders belonging to the logged-in customer.", "parameters": {"type": "object", "properties": {}}},
-        {"name": "track_order", "description": "Track an order using a receipt token only.", "parameters": {"type": "object", "properties": {"receipt_token": {"type": "string", "description": "The unique receipt token from the customer's receipt"}}, "required": ["receipt_token"]}},
+        _tool("faq", "Answer a frequently asked question about the laundry service.",
+              {"topic": {"type": "string"}}, ["topic"]),
+        _tool("estimate_price", "Estimate the cost for a laundry service.",
+              {"service_name": {"type": "string"}, "quantity_kg": {"type": "number"}}, ["service_name", "quantity_kg"]),
+        _tool("get_all_services", "Return all active laundry services and their prices."),
+        _tool("get_my_orders", "Return all recent orders belonging to the logged-in customer."),
+        _tool("track_order", "Track an order using a receipt token.",
+              {"receipt_token": {"type": "string", "description": "The unique receipt token from the customer's receipt"}}, ["receipt_token"]),
     ],
     "EMPLOYEE": [
-        {"name": "faq", "description": "Answer a FAQ.", "parameters": {"type": "object", "properties": {"topic": {"type": "string"}}, "required": ["topic"]}},
-        {"name": "estimate_price", "description": "Estimate price.", "parameters": {"type": "object", "properties": {"service_name": {"type": "string"}, "quantity_kg": {"type": "number"}}, "required": ["service_name", "quantity_kg"]}},
-        {"name": "get_all_services", "description": "Return all active services.", "parameters": {"type": "object", "properties": {}}},
-        {"name": "get_my_orders", "description": "Return all recent orders belonging to the logged-in customer.", "parameters": {"type": "object", "properties": {}}},
-        {"name": "track_order", "description": "Track an order by receipt token.", "parameters": {"type": "object", "properties": {"receipt_token": {"type": "string"}}, "required": ["receipt_token"]}},
-        {"name": "get_today_queue", "description": "Get today's order queue counts grouped by status.", "parameters": {"type": "object", "properties": {}}},
-        {"name": "get_processing_counts", "description": "Get counts of orders currently at shop or processing.", "parameters": {"type": "object", "properties": {}}},
-        {"name": "get_walkin_summary", "description": "Get today's walk-in order summary.", "parameters": {"type": "object", "properties": {}}},
-        {"name": "lookup_order", "description": "Look up an order by receipt token or order ID (numeric).", "parameters": {"type": "object", "properties": {"identifier": {"type": "string", "description": "Receipt token or numeric order ID"}}, "required": ["identifier"]}},
-        {"name": "get_unpaid_orders", "description": "Get list of unpaid orders.", "parameters": {"type": "object", "properties": {}}},
-        {"name": "get_ready_for_delivery", "description": "Get orders ready for or out for delivery.", "parameters": {"type": "object", "properties": {}}},
-        {"name": "get_operational_counts", "description": "Get current live processing, ready, and completed counts.", "parameters": {"type": "object", "properties": {}}},
+        _tool("faq", "Answer a FAQ.", {"topic": {"type": "string"}}, ["topic"]),
+        _tool("estimate_price", "Estimate price for a service.",
+              {"service_name": {"type": "string"}, "quantity_kg": {"type": "number"}}, ["service_name", "quantity_kg"]),
+        _tool("get_all_services", "Return all active services."),
+        _tool("get_my_orders", "Return all recent orders belonging to the logged-in customer."),
+        _tool("track_order", "Track an order by receipt token.",
+              {"receipt_token": {"type": "string"}}, ["receipt_token"]),
+        _tool("get_today_queue", "Get today's order queue counts grouped by status."),
+        _tool("get_processing_counts", "Get counts of orders currently at shop or processing."),
+        _tool("get_walkin_summary", "Get today's walk-in order summary."),
+        _tool("lookup_order", "Look up an order by receipt token or order ID (numeric).",
+              {"identifier": {"type": "string", "description": "Receipt token or numeric order ID"}}, ["identifier"]),
+        _tool("get_unpaid_orders", "Get list of unpaid orders."),
+        _tool("get_ready_for_delivery", "Get orders ready for or out for delivery."),
+        _tool("get_operational_counts", "Get current live processing, ready, and completed counts."),
     ],
     "ADMIN": None,  # Populated below to include all tools
 }
 
 # Admin gets all employee tools plus extra
 AI_TOOLS["ADMIN"] = AI_TOOLS["EMPLOYEE"] + [
-    {"name": "get_orders_summary", "description": "Get total order counts for a period (today/week/month).", "parameters": {"type": "object", "properties": {"period": {"type": "string", "description": "today, week, or month"}}, "required": ["period"]}},
-    {"name": "get_revenue_summary", "description": "Get revenue totals for a period.", "parameters": {"type": "object", "properties": {"period": {"type": "string"}}, "required": ["period"]}},
-    {"name": "get_payment_breakdown", "description": "Get Cash vs GCash vs PayPal breakdown for a period.", "parameters": {"type": "object", "properties": {"period": {"type": "string"}}, "required": ["period"]}},
-    {"name": "get_analytics_summary", "description": "Get a full analytics summary: orders + revenue + payments for a period.", "parameters": {"type": "object", "properties": {"period": {"type": "string"}}, "required": ["period"]}},
+    _tool("get_orders_summary", "Get total order counts for a period (today/week/month).",
+          {"period": {"type": "string", "description": "today, week, or month"}}, ["period"]),
+    _tool("get_revenue_summary", "Get revenue totals for a period.",
+          {"period": {"type": "string"}}, ["period"]),
+    _tool("get_payment_breakdown", "Get Cash vs GCash vs PayPal breakdown for a period.",
+          {"period": {"type": "string"}}, ["period"]),
+    _tool("get_analytics_summary", "Get a full analytics summary: orders + revenue + payments for a period.",
+          {"period": {"type": "string"}}, ["period"]),
 ]
 
 
@@ -1789,23 +1817,34 @@ def chatbot_api(request):
         max_rounds = 5
         rounds = 0
         final_text = ""
-        
+        temperature = 0.3  # Lower temp = more reliable tool call generation
+
         while rounds < max_rounds:
             rounds += 1
-            
-            response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=chat_history,
-                tools=tools,
-                tool_choice="auto"
-            )
-            
+
+            try:
+                response = client.chat.completions.create(
+                    model="openai/gpt-oss-120b",
+                    messages=chat_history,
+                    tools=tools,
+                    tool_choice="auto",
+                    temperature=temperature,
+                )
+            except Exception as call_err:
+                # Retry with lower temperature on tool_use_failed (400)
+                err_str = str(call_err)
+                if "400" in err_str and "tool_use_failed" in err_str and temperature > 0.05:
+                    temperature = max(temperature - 0.1, 0.05)
+                    rounds -= 1  # Don't count this as a round
+                    continue
+                raise call_err
+
             response_message = response.choices[0].message
-            
+
             if response_message.tool_calls:
                 # Add the assistant's request to call tools to history
                 chat_history.append(response_message.model_dump(exclude_unset=True))
-                
+
                 for tool_call in response_message.tool_calls:
                     fn_name = tool_call.function.name
                     fn_args_str = tool_call.function.arguments
