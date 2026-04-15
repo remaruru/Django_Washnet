@@ -6,7 +6,7 @@
 {% block content %}
 <div style="width: 100%; max-width: 440px; text-align: center;">
 
-    <a href="{% url 'admin_settings' %}" style="display: inline-flex; align-items: center; gap: var(--space-2); text-decoration: none; margin-bottom: var(--space-8); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+    <a href="{% url 'security_settings' %}" style="display: inline-flex; align-items: center; gap: var(--space-2); text-decoration: none; margin-bottom: var(--space-8); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
         <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #059669); display: flex; align-items: center; justify-content: center; box-shadow: 12px 12px 24px #d1cddb, -12px -12px 24px #ffffff; color: white;">
             <i data-feather="mail" style="width: 28px; height: 28px;"></i>
         </div>
@@ -30,7 +30,7 @@
             <button type="submit" class="clay-auth-btn" style="width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 900; letter-spacing: 0.02em; background: linear-gradient(135deg, #10b981, #059669); color: white;">
                 Save Security Settings <i data-feather="check" style="width: 18px; height: 18px;"></i>
             </button>
-            <a href="{% url 'admin_settings' %}" style="display: block; text-align: center; margin-top: var(--space-4); color: var(--text-muted); font-size: 13px; font-weight: 700; text-decoration: none;">Cancel</a>
+            <a href="{% url 'security_settings' %}" style="display: block; text-align: center; margin-top: var(--space-4); color: var(--text-muted); font-size: 13px; font-weight: 700; text-decoration: none;">Cancel</a>
         </form>
     </div>
 
