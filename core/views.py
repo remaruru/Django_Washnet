@@ -1810,8 +1810,8 @@ def chatbot_api(request):
                     fn_name = tool_call.function.name
                     fn_args_str = tool_call.function.arguments
                     try:
-                        fn_args = json.loads(fn_args_str)
-                    except json.JSONDecodeError:
+                        fn_args = json.loads(fn_args_str) or {}
+                    except (json.JSONDecodeError, TypeError):
                         fn_args = {}
 
                     # Security: verify this tool is actually allowed for this role
