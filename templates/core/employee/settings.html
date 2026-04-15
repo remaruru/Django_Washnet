@@ -1,0 +1,161 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Admin Settings - WASHNET{% endblock %}
+
+{% block sidebar_nav %}
+    <p style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2); padding: 0 var(--space-4); margin-top: var(--space-2);">Operations</p>
+    <a href="{% url 'employee_dashboard' %}" class="sidebar-link" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
+        <i data-feather="grid" style="width: 18px; height: 18px;"></i> Workflow
+    </a>
+    <a href="{% url 'employee_pos' %}" class="sidebar-link" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
+        <i data-feather="monitor" style="width: 18px; height: 18px;"></i> Point of Sale
+    </a>
+    
+    <p style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2); padding: 0 var(--space-4); margin-top: var(--space-6);">Logistics</p>
+    <a href="#" class="sidebar-link" style="opacity: 0.5; cursor: not-allowed; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;" title="Coming Soon">
+        <i data-feather="package" style="width: 18px; height: 18px;"></i> Inventory
+    </a>
+    <a href="#" class="sidebar-link" style="opacity: 0.5; cursor: not-allowed; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;" title="Coming Soon">
+        <i data-feather="users" style="width: 18px; height: 18px;"></i> Customers
+    </a>
+    <p style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2); padding: 0 var(--space-4); margin-top: var(--space-6);">Management</p>
+    <a href="{% url 'security_settings' %}" class="sidebar-link active" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--primary); background: var(--primary-light); font-weight: 700;">
+        <i data-feather="settings" style="width: 18px; height: 18px;"></i> Settings
+    </a>
+{% endblock %}
+
+{% block header_title %}Security Settings{% endblock %}
+
+{% block header_actions %}
+<div class="header-custom-actions" style="display: flex; align-items: center; gap: var(--space-6);">
+    <a href="{% url 'employee_pos' %}" class="clay-btn clay-btn-primary" style="padding: var(--space-2) var(--space-4); font-size: var(--text-sm);">
+        <i data-feather="plus" style="width: 16px; height: 16px;"></i> New Walk-in
+    </a>
+    <div style="width: 1px; height: 32px; background: var(--border);"></div>
+    <div class="header-user-profile" style="display: flex; align-items: center; gap: var(--space-3);">
+        <div style="text-align: right;">
+            <p style="font-size: var(--text-sm); font-weight: 800; color: var(--text-main); margin: 0;">{{ user.username }}</p>
+            <p style="font-size: var(--text-xs); font-weight: 600; color: var(--text-muted); margin: 0;">Employee</p>
+        </div>
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--surface); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; box-shadow: var(--shadow-clay-card);">
+            {{ user.username|make_list|first|upper }}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div style="padding-bottom: var(--space-12);">
+
+    <div style="margin-bottom: var(--space-6);">
+        <h2 style="font-size: var(--text-2xl); font-weight: 900; color: var(--text-main); margin-bottom: 4px; font-family: 'Nunito', sans-serif;">Security Configuration</h2>
+        <p style="color: var(--text-muted); font-size: var(--text-sm); font-weight: 500; margin: 0;">Manage your Two-Factor Authentication settings and view recent security events.</p>
+    </div>
+
+    <!-- 2FA Settings Card -->
+    <div class="clay-card" style="margin-bottom: var(--space-6);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-6);">
+            <div>
+                <h3 style="font-size: var(--text-lg); font-weight: 800; color: var(--text-main); margin: 0 0 var(--space-2) 0; display: flex; align-items: center; gap: var(--space-2);">
+                    <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background: rgba(16, 185, 129, 0.1); color: var(--secondary); display: flex; align-items: center; justify-content: center;">
+                        <i data-feather="shield"></i>
+                    </div>
+                    Two-Factor Authentication (OTP)
+                </h3>
+                <p style="color: var(--text-muted); font-size: var(--text-sm); margin: 0;">We strongly recommend configuring a secure email address to receive One-Time Passwords during login.</p>
+            </div>
+            
+            {% if current_email %}
+            <span class="clay-badge clay-badge-green" style="display: flex; align-items: center; gap: 4px;">
+                <i data-feather="check-circle" style="width: 12px; height: 12px;"></i> Active
+            </span>
+            {% else %}
+            <span class="clay-badge clay-badge-red" style="display: flex; align-items: center; gap: 4px;">
+                <i data-feather="alert-triangle" style="width: 12px; height: 12px;"></i> Not Configured
+            </span>
+            {% endif %}
+        </div>
+
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-6); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <p style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 var(--space-2) 0;">Secure Notification Email</p>
+                {% if current_email %}
+                    <p style="font-size: var(--text-base); font-weight: 800; color: var(--text-main); margin: 0;">{{ current_email }}</p>
+                {% else %}
+                    <p style="font-size: var(--text-base); font-weight: 600; color: var(--error); margin: 0; font-style: italic;">No designated email address set. Standard login is currently allowed.</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <a href="{% url 'admin_request_change_otp' %}" class="clay-btn clay-btn-primary" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                    {% if current_email %}
+                        <i data-feather="edit-2" style="width: 16px; height: 16px;"></i> Change Email
+                    {% else %}
+                        <i data-feather="plus" style="width: 16px; height: 16px;"></i> Configure Now
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Audit Log -->
+    <div class="clay-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+        <div style="padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--border); background: var(--surface); display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: var(--text-lg); font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: var(--space-2);">
+                Recent Security Events
+            </h2>
+        </div>
+        
+        <div class="clay-table-wrapper" style="box-shadow: none; border-radius: 0; border: none; padding: 0;">
+            <div style="overflow-x: auto;">
+                <table class="clay-table" style="margin: 0; width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Date / Time</th>
+                            <th>Event Type</th>
+                            <th>Status</th>
+                            <th>Failed Attempts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in audit_logs %}
+                        <tr>
+                            <td style="font-weight: 600; color: var(--text-muted);">{{ log.created_at|date:"M d, Y H:i" }}</td>
+                            <td>
+                                {% if log.purpose == 'LOGIN' %}
+                                    <span class="clay-badge clay-badge-blue">Login Authentication</span>
+                                {% else %}
+                                    <span class="clay-badge clay-badge-yellow">Email Settings Change</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.is_used %}
+                                    <span style="color: var(--secondary); font-weight: 800; display: flex; align-items: center; gap: 4px;">
+                                        <i data-feather="check" style="width: 14px; height: 14px;"></i> Verified
+                                    </span>
+                                {% elif log.is_expired %}
+                                    <span style="color: var(--text-muted); font-weight: 600;">Expired</span>
+                                {% elif log.is_locked %}
+                                    <span style="color: var(--error); font-weight: 800; display: flex; align-items: center; gap: 4px;">
+                                        <i data-feather="lock" style="width: 14px; height: 14px;"></i> Locked
+                                    </span>
+                                {% else %}
+                                    <span style="color: var(--primary); font-weight: 600;">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-weight: 800; color: {% if log.attempts > 0 %}var(--error){% else %}var(--text-muted){% endif %};">
+                                {{ log.attempts }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" style="text-align: center; color: var(--text-muted); font-weight: 600; padding: var(--space-6);">No recent security events found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

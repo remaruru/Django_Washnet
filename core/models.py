@@ -189,18 +189,17 @@ class Appointment(models.Model):
         return f"{self.get_appointment_type_display()} Appointment for {self.customer.username} on {self.appointment_date.strftime('%Y-%m-%d %H:%M')}"
 
 
-# ── Admin OTP Security ────────────────────────────────────────────────────────
+# ── System OTP Security ────────────────────────────────────────────────────────
 
-class AdminOTPEmail(models.Model):
-    """Stores the dedicated OTP email address for an Admin account."""
+class UserOTPEmail(models.Model):
+    """Stores the dedicated OTP email address for an account, if configured."""
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name='admin_otp_email',
-        limit_choices_to={'role': 'ADMIN'},
+        related_name='user_otp_email',
     )
     otp_email = models.EmailField(
-        help_text="Email address where Admin OTP codes are delivered."
+        help_text="Email address where security OTP codes are delivered."
     )
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -209,15 +208,15 @@ class AdminOTPEmail(models.Model):
 
     @staticmethod
     def get_for_user(user):
-        """Return the OTP email address for the admin, or None if not configured."""
+        """Return the configured OTP email address for the user, or None if not configured."""
         try:
-            return user.admin_otp_email.otp_email
-        except AdminOTPEmail.DoesNotExist:
+            return user.user_otp_email.otp_email
+        except UserOTPEmail.DoesNotExist:
             return None
 
 
-class AdminOTP(models.Model):
-    """Stores a single hashed OTP token for admin authentication events."""
+class UserOTP(models.Model):
+    """Stores a single hashed OTP token for user authentication events."""
 
     class PurposeChoices(models.TextChoices):
         LOGIN = 'LOGIN', _('Login Verification')
@@ -230,7 +229,7 @@ class AdminOTP(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='admin_otps',
+        related_name='user_otps',
     )
     hashed_code = models.CharField(max_length=64)   # SHA-256 hex digest
     purpose = models.CharField(

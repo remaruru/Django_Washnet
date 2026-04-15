@@ -11,7 +11,7 @@ import re
 import qrcode # type: ignore
 from io import BytesIO
 from django.core.files.base import ContentFile # type: ignore
-from core.models import User, Order, Appointment, Service, Product, OrderItem, AdminOTP, AdminOTPEmail # type: ignore
+from core.models import User, Order, Appointment, Service, Product, OrderItem, UserOTP, UserOTPEmail # type: ignore
 from django.core.mail import send_mail
 from core.forms import CustomUserCreationForm # type: ignore
 import requests
@@ -21,20 +21,20 @@ from django.utils.crypto import get_random_string
 
 # --- AUTHENTICATION VIEWS ---
 
-def _send_otp_email(user, plain_code, purpose):
-    """Helper: send OTP email to the admin's configured OTP address using Brevo HTTP API."""
+def _send_otp_email(user, plain_code, purpose, target_email=None):
+    """Helper: send OTP email to the provided target email using Brevo HTTP API."""
     import re
     
-    recipient = AdminOTPEmail.get_for_user(user)
+    recipient = target_email
     if not recipient:
         return
         
-    subject = 'WASHNET Admin Login OTP' if purpose == AdminOTP.PurposeChoices.LOGIN else 'WASHNET Admin Security Code'
+    subject = 'WASHNET User Login OTP' if purpose == UserOTP.PurposeChoices.LOGIN else 'WASHNET Security Code'
     body = (
         f'Hi {user.username},\n\n'
         f'Your WASHNET security code is:\n\n'
         f'    {plain_code}\n\n'
-        f'This code expires in {AdminOTP.OTP_EXPIRY_MINUTES} minutes and can only be used once.\n'
+        f'This code expires in {UserOTP.OTP_EXPIRY_MINUTES} minutes and can only be used once.\n'
         f'If you did not request this code, please contact your system administrator immediately.\n\n'
         f'-- WASHNET Security'
     )
@@ -85,25 +85,27 @@ def login_view(request):
 
         user = authenticate(request, username=username, password=password)
         if user is not None:
-            if user.role == User.RoleChoices.ADMIN:
-                # --- Admin: intercept and require OTP before granting session ---
-                otp_target = AdminOTPEmail.get_for_user(user)
-                if not otp_target:
-                    # No OTP email configured — log in normally but prompt to set one
-                    login(request, user)
+            # --- Universal MFA Intercept ---
+            otp_target = UserOTPEmail.get_for_user(user)
+            if not otp_target and user.role == User.RoleChoices.CUSTOMER:
+                otp_target = user.email if user.email else None
+                
+            if not otp_target:
+                # No MFA set, bypass and login immediately
+                login(request, user)
+                if user.role in [User.RoleChoices.ADMIN, User.RoleChoices.EMPLOYEE]:
                     messages.warning(
                         request,
-                        'No OTP email configured. Please set one in Admin Settings to enable two-factor security.'
+                        'No OTP email configured. Please set one in Settings to enable two-factor security.'
                     )
-                    return redirect('admin_settings')
-                otp_obj, plain_code = AdminOTP.generate(user, AdminOTP.PurposeChoices.LOGIN)
-                _send_otp_email(user, plain_code, AdminOTP.PurposeChoices.LOGIN)
-                request.session['pending_admin_id'] = user.pk
-                request.session['pending_admin_otp_id'] = otp_obj.pk
-                return redirect('admin_verify_otp')
-            else:
-                login(request, user)
                 return redirect('dashboard')
+            else:
+                # MFA enabled, generate and send OTP
+                otp_obj, plain_code = UserOTP.generate(user, UserOTP.PurposeChoices.LOGIN)
+                _send_otp_email(user, plain_code, UserOTP.PurposeChoices.LOGIN, target_email=otp_target)
+                request.session['pending_login_id'] = user.pk
+                request.session['pending_login_otp_id'] = otp_obj.pk
+                return redirect('verify_otp')
         else:
             messages.error(request, 'Invalid username or password.')
 
@@ -270,193 +272,220 @@ def complete_profile(request):
 
 # --- ADMIN OTP SECURITY VIEWS ---
 
-def admin_verify_otp(request):
+def verify_otp(request):
     """View handling the submission of OTP during login."""
-    pending_admin_id = request.session.get('pending_admin_id')
+    pending_login_id = request.session.get('pending_login_id')
     
-    if not pending_admin_id:
-        messages.error(request, 'No pending admin login found.')
+    if not pending_login_id:
+        messages.error(request, 'No pending login found.')
         return redirect('login')
         
-    user = get_object_or_404(User, pk=pending_admin_id)
+    user = get_object_or_404(User, pk=pending_login_id)
     
     if request.method == 'POST':
         otp_code = request.POST.get('otp_code')
-        otp_obj = AdminOTP.get_active(user, AdminOTP.PurposeChoices.LOGIN)
+        otp_obj = UserOTP.get_active(user, UserOTP.PurposeChoices.LOGIN)
         
         if not otp_obj:
             messages.error(request, 'OTP expired or not found. Please request a new one.')
-            return redirect('admin_verify_otp')
+            return redirect('verify_otp')
             
         if otp_obj.verify(otp_code):
             # Success: Complete login
             login(request, user)
             
             # Clean up session
-            request.session.pop('pending_admin_id', None)
-            request.session.pop('pending_admin_otp_id', None)
+            request.session.pop('pending_login_id', None)
+            request.session.pop('pending_login_otp_id', None)
             
-            messages.success(request, 'Admin authentication successful.')
-            return redirect('admin_dashboard')
+            messages.success(request, 'Authentication successful.')
+            if user.role == User.RoleChoices.ADMIN:
+                return redirect('admin_dashboard')
+            elif user.role == User.RoleChoices.EMPLOYEE:
+                return redirect('employee_dashboard')
+            else:
+                return redirect('dashboard')
         else:
             if otp_obj.is_locked:
                 messages.error(request, 'Too many failed attempts. Please login again.')
-                request.session.pop('pending_admin_id', None)
-                request.session.pop('pending_admin_otp_id', None)
+                request.session.pop('pending_login_id', None)
+                request.session.pop('pending_login_otp_id', None)
                 return redirect('login')
             else:
-                messages.error(request, f'Invalid OTP. You have {AdminOTP.MAX_ATTEMPTS - otp_obj.attempts} attempts remaining.')
+                messages.error(request, f'Invalid OTP. You have {UserOTP.MAX_ATTEMPTS - otp_obj.attempts} attempts remaining.')
                 
     # Mask email for display
-    otp_email = AdminOTPEmail.get_for_user(user)
+    otp_email = UserOTPEmail.get_for_user(user)
+    if not otp_email and user.role == User.RoleChoices.CUSTOMER:
+        otp_email = user.email
+        
     try:
         name, domain = otp_email.split('@')
         masked_email = f"{name[:2]}***@{domain}"
-    except ValueError:
+    except (ValueError, AttributeError):
         masked_email = "***"
         
-    return render(request, 'core/admin/verify_otp.html', {'masked_email': masked_email})
+    return render(request, 'core/verify_otp.html', {'masked_email': masked_email})
 
-def admin_resend_otp(request):
+def resend_otp(request):
     """View to handle resending the OTP (both login and email change)."""
     # Try to get user from session (login flow) or request user (settings flow)
-    pending_admin_id = request.session.get('pending_admin_id')
+    pending_login_id = request.session.get('pending_login_id')
     target_user = None
     purpose = None
     
-    if pending_admin_id:
-        target_user = get_object_or_404(User, pk=pending_admin_id)
-        purpose = AdminOTP.PurposeChoices.LOGIN
-        redirect_url = 'admin_verify_otp'
-    elif request.user.is_authenticated and request.user.role == User.RoleChoices.ADMIN:
+    if pending_login_id:
+        target_user = get_object_or_404(User, pk=pending_login_id)
+        purpose = UserOTP.PurposeChoices.LOGIN
+        redirect_url = 'verify_otp'
+    elif request.user.is_authenticated:
         # Check if they are in the email change flow
         if request.session.get('pending_email_change'):
              target_user = request.user
-             purpose = AdminOTP.PurposeChoices.EMAIL_CHANGE
-             redirect_url = 'admin_verify_change_otp'
+             purpose = UserOTP.PurposeChoices.EMAIL_CHANGE
+             redirect_url = 'verify_change_otp'
         else:
             messages.error(request, 'Invalid resend request.')
-            return redirect('admin_settings')
+            return redirect('security_settings')
     else:
         messages.error(request, 'Session expired.')
         return redirect('login')
 
     # Find the most recent OTP to check cooldown
-    recent_otp = AdminOTP.objects.filter(
+    recent_otp = UserOTP.objects.filter(
         user=target_user, 
         purpose=purpose
     ).order_by('-created_at').first()
     
     if recent_otp:
         time_elapsed = (timezone.now() - recent_otp.created_at).total_seconds()
-        if time_elapsed < AdminOTP.RESEND_COOLDOWN_SECONDS:
-            messages.error(request, f'Please wait {int(AdminOTP.RESEND_COOLDOWN_SECONDS - time_elapsed)}s before resending.')
+        if time_elapsed < UserOTP.RESEND_COOLDOWN_SECONDS:
+            messages.error(request, f'Please wait {int(UserOTP.RESEND_COOLDOWN_SECONDS - time_elapsed)}s before resending.')
             return redirect(redirect_url)
 
     # Generate and send new OTP
-    otp_obj, plain_code = AdminOTP.generate(target_user, purpose)
-    _send_otp_email(target_user, plain_code, purpose)
+    otp_obj, plain_code = UserOTP.generate(target_user, purpose)
+    
+    target_email = UserOTPEmail.get_for_user(target_user)
+    if not target_email and target_user.role == User.RoleChoices.CUSTOMER:
+        target_email = target_user.email
+        
+    _send_otp_email(target_user, plain_code, purpose, target_email=target_email)
     
     messages.success(request, 'A new security code has been sent.')
     return redirect(redirect_url)
 
+def _get_base_template(user):
+    if user.role == User.RoleChoices.ADMIN:
+        return 'base_dashboard.html'
+    elif user.role == User.RoleChoices.EMPLOYEE:
+        return 'base_employee.html'
+    return 'base_customer.html'
+
 @login_required
-def admin_settings(request):
-    """Admin settings page, primarily for managing the OTP email."""
-    if request.user.role != User.RoleChoices.ADMIN:
-        return redirect('dashboard')
-        
+def security_settings(request):
+    """Settings page, primarily for managing the OTP email."""
     try:
-        current_email = request.user.admin_otp_email.otp_email
-    except AdminOTPEmail.DoesNotExist:
+        current_email = request.user.user_otp_email.otp_email
+    except UserOTPEmail.DoesNotExist:
         current_email = None
         
     # Get audit log
-    audit_logs = AdminOTP.objects.filter(user=request.user)[:10]
+    audit_logs = UserOTP.objects.filter(user=request.user)[:10]
         
     context = {
         'current_email': current_email,
         'audit_logs': audit_logs,
     }
-    return render(request, 'core/admin/settings.html', context)
+    
+    if request.user.role == User.RoleChoices.ADMIN:
+        return render(request, 'core/admin/settings.html', context)
+    elif request.user.role == User.RoleChoices.EMPLOYEE:
+        return render(request, 'core/employee/settings.html', context)
+    else:
+        return render(request, 'core/customer/settings.html', context)
 
 @login_required
-def admin_request_change_otp(request):
-    """Initiates the process to change the OTP email by an already logged-in admin."""
-    if request.user.role != User.RoleChoices.ADMIN:
-        return redirect('dashboard')
-        
+def request_change_otp(request):
+    """Initiates the process to change the OTP email by an already logged-in user."""
     # If no email is set yet, they can just set it without verification
-    if not hasattr(request.user, 'admin_otp_email'):
-        return render(request, 'core/admin/set_otp_email.html')
+    if not hasattr(request.user, 'user_otp_email'):
+        return render(request, 'core/set_otp_email.html', {'base_template': _get_base_template(request.user)})
         
     # If email exists, they must prove control of it first
-    otp_obj, plain_code = AdminOTP.generate(request.user, AdminOTP.PurposeChoices.EMAIL_CHANGE)
-    _send_otp_email(request.user, plain_code, AdminOTP.PurposeChoices.EMAIL_CHANGE)
+    otp_obj, plain_code = UserOTP.generate(request.user, UserOTP.PurposeChoices.EMAIL_CHANGE)
     
+    target_email = UserOTPEmail.get_for_user(request.user)
+    if not target_email and request.user.role == User.RoleChoices.CUSTOMER:
+        target_email = request.user.email
+    
+    _send_otp_email(request.user, plain_code, UserOTP.PurposeChoices.EMAIL_CHANGE, target_email=target_email)
     request.session['pending_email_change'] = True
     
     messages.info(request, 'Please verify your current OTP email before changing it.')
-    return redirect('admin_verify_change_otp')
+    return redirect('verify_change_otp')
 
 @login_required
-def admin_verify_change_otp(request):
+def verify_change_otp(request):
     """Verifies the OTP sent to the current email before allowing a change."""
-    if request.user.role != User.RoleChoices.ADMIN or not request.session.get('pending_email_change'):
-        return redirect('admin_settings')
+    if not request.session.get('pending_email_change'):
+        return redirect('security_settings')
         
     if request.method == 'POST':
         otp_code = request.POST.get('otp_code')
-        otp_obj = AdminOTP.get_active(request.user, AdminOTP.PurposeChoices.EMAIL_CHANGE)
+        otp_obj = UserOTP.get_active(request.user, UserOTP.PurposeChoices.EMAIL_CHANGE)
         
         if not otp_obj:
             messages.error(request, 'OTP expired or not found. Please request a new one.')
-            return redirect('admin_request_change_otp')
+            return redirect('request_change_otp')
             
         if otp_obj.verify(otp_code):
             # Success: Mark as verified and allow email change
             request.session['email_change_verified'] = True
             messages.success(request, 'Identity verified. You may now set a new OTP email.')
-            return render(request, 'core/admin/set_otp_email.html')
+            return render(request, 'core/set_otp_email.html', {'base_template': _get_base_template(request.user)})
         else:
              if otp_obj.is_locked:
                  messages.error(request, 'Too many failed verification attempts. Please try changing the email again.')
                  request.session.pop('pending_email_change', None)
-                 return redirect('admin_settings')
+                 return redirect('security_settings')
              else:
-                 messages.error(request, f'Invalid OTP. You have {AdminOTP.MAX_ATTEMPTS - otp_obj.attempts} attempts remaining.')
+                 messages.error(request, f'Invalid OTP. You have {UserOTP.MAX_ATTEMPTS - otp_obj.attempts} attempts remaining.')
                  
-    otp_email = AdminOTPEmail.get_for_user(request.user)
+    otp_email = UserOTPEmail.get_for_user(request.user)
+    if not otp_email and request.user.role == User.RoleChoices.CUSTOMER:
+        otp_email = request.user.email
+        
     try:
         name, domain = otp_email.split('@')
         masked_email = f"{name[:2]}***@{domain}"
-    except ValueError:
+    except (ValueError, AttributeError):
         masked_email = "***"
         
-    return render(request, 'core/admin/verify_change_otp.html', {'masked_email': masked_email})
+    return render(request, 'core/verify_change_otp.html', {
+        'masked_email': masked_email,
+        'base_template': _get_base_template(request.user)
+    })
 
 @login_required
-def admin_save_otp_email(request):
+def save_otp_email(request):
     """Saves the new OTP email after successful verification or if setting for the first time."""
-    if request.user.role != User.RoleChoices.ADMIN:
-        return redirect('dashboard')
-        
-    has_existing = hasattr(request.user, 'admin_otp_email')
+    has_existing = hasattr(request.user, 'user_otp_email')
     
     # If they are changing an existing email, they must have verified the old one
     if has_existing and not request.session.get('email_change_verified'):
          messages.error(request, 'You must verify your current email first.')
-         return redirect('admin_settings')
+         return redirect('security_settings')
          
     if request.method == 'POST':
         new_email = request.POST.get('new_email')
         
         if not new_email:
              messages.error(request, 'Email cannot be empty.')
-             return render(request, 'core/admin/set_otp_email.html')
+             return render(request, 'core/set_otp_email.html', {'base_template': _get_base_template(request.user)})
              
         # Save or update the OTP email
-        otp_email, created = AdminOTPEmail.objects.get_or_create(user=request.user)
+        otp_email, created = UserOTPEmail.objects.get_or_create(user=request.user)
         otp_email.otp_email = new_email
         otp_email.save()
         
@@ -464,10 +493,10 @@ def admin_save_otp_email(request):
         request.session.pop('pending_email_change', None)
         request.session.pop('email_change_verified', None)
         
-        messages.success(request, 'Admin OTP email updated successfully.')
-        return redirect('admin_settings')
+        messages.success(request, 'OTP verification email updated successfully.')
+        return redirect('security_settings')
         
-    return redirect('admin_settings')
+    return redirect('security_settings')
 
 # --- PUBLIC VIEWS ---
 

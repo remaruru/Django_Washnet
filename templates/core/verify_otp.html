@@ -19,7 +19,7 @@
     </div>
 
     <div class="clay-auth-card" style="text-align: left; padding: var(--space-8);">
-        <form method="POST" action="{% url 'admin_verify_otp' %}">
+        <form method="POST" action="{% url 'verify_otp' %}">
             {% csrf_token %}
             
             <div class="form-group" style="margin-bottom: var(--space-6);">
@@ -35,7 +35,7 @@
 
     <p style="font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); margin-top: var(--space-8);">
         Didn't receive the code? <br>
-        <a href="{% url 'admin_resend_otp' %}" style="color: var(--secondary); font-weight: 800; text-decoration: none; border-bottom: 2px solid rgba(16,185,129,0.3); padding-bottom: 2px;">Resend Code</a>
+        <a href="{% url 'resend_otp' %}" style="color: var(--secondary); font-weight: 800; text-decoration: none; border-bottom: 2px solid rgba(16,185,129,0.3); padding-bottom: 2px;">Resend Code</a>
     </p>
 
 </div>

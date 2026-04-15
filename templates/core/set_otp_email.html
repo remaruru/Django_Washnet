@@ -19,7 +19,7 @@
     </div>
 
     <div class="clay-auth-card" style="text-align: left; padding: var(--space-8);">
-        <form method="POST" action="{% url 'admin_save_otp_email' %}">
+        <form method="POST" action="{% url 'save_otp_email' %}">
             {% csrf_token %}
             
             <div class="form-group" style="margin-bottom: var(--space-6);">
