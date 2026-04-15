@@ -379,8 +379,10 @@ def _get_base_template(user):
     if user.role == User.RoleChoices.ADMIN:
         return 'base_dashboard.html'
     elif user.role == User.RoleChoices.EMPLOYEE:
-        return 'base_employee.html'
-    return 'base_customer.html'
+        return 'base_dashboard.html'
+    elif user.role == User.RoleChoices.RIDER:
+        return 'base_dashboard.html'
+    return 'base_dashboard.html'
 
 @login_required
 def security_settings(request):
@@ -402,6 +404,8 @@ def security_settings(request):
         return render(request, 'core/admin/settings.html', context)
     elif request.user.role == User.RoleChoices.EMPLOYEE:
         return render(request, 'core/employee/settings.html', context)
+    elif request.user.role == User.RoleChoices.RIDER:
+        return render(request, 'core/delivery/settings.html', context)
     else:
         return render(request, 'core/customer/settings.html', context)
 
