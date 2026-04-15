@@ -3,38 +3,26 @@
 
 {% block title %}Dashboard - WASHNET{% endblock %}
 
-{% block sidebar_nav %}
-<style>
-.tracker-container { padding: var(--space-4) var(--space-2) var(--space-2) var(--space-2); position: relative; }
-.tracker-bg-line { position: absolute; top: 30px; left: 10%; right: 10%; height: 3px; background: var(--border); border-radius: 4px; z-index: 0; }
-.tracker-active-line { position: absolute; top: 30px; left: 10%; height: 3px; background: var(--secondary); border-radius: 4px; z-index: 10; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 6px rgba(16,185,129,0.3); }
-.tracker-steps { display: flex; justify-content: space-between; position: relative; z-index: 20; }
-.tracker-step { display: flex; flex-direction: column; align-items: center; width: 20%; gap: 4px; }
-.tracker-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--surface); border: 2px solid var(--border); color: var(--text-muted); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 0 2px var(--surface); }
-.tracker-icon.active { background: var(--secondary); border-color: var(--secondary); color: white; box-shadow: 0 0 0 2px var(--surface), var(--shadow-clay-card); transform: scale(1.1); }
-.tracker-label { font-size: 10px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); opacity: 0.6; transition: all 0.4s ease; text-align: center; }
-.tracker-label.active { font-weight: 800; color: var(--text-main); opacity: 1; }
-@media (max-width: 600px) { .tracker-label { font-size: 9px; } .tracker-icon { width: 20px; height: 20px; } .tracker-bg-line, .tracker-active-line { top: 26px; } }
-</style>
+{{%- block sidebar_nav %}}
     <p style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2); padding: 0 var(--space-4); margin-top: var(--space-2);">Personal</p>
-    <a href="{% url 'customer_dashboard' %}" class="sidebar-link active">
+    <a href="{{% url 'customer_dashboard' %}}" class="sidebar-link active" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--primary); background: var(--primary-light); font-weight: 700;">
         <i data-feather="home" style="width: 18px; height: 18px;"></i> Dashboard
     </a>
-    <a href="{% url 'customer_create_order' %}" class="sidebar-link">
+    <a href="{{% url 'customer_create_order' %}}" class="sidebar-link " style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
         <i data-feather="plus-circle" style="width: 18px; height: 18px;"></i> Create Order
     </a>
-    <a href="{% url 'customer_history' %}" class="sidebar-link">
+    <a href="{{% url 'customer_history' %}}" class="sidebar-link " style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
         <i data-feather="clock" style="width: 18px; height: 18px;"></i> Order History
     </a>
-    <a href="{% url 'customer_profile' %}" class="sidebar-link">
+    <a href="{{% url 'customer_profile' %}}" class="sidebar-link " style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
         <i data-feather="user" style="width: 18px; height: 18px;"></i> Profile
     </a>
 
     <p style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2); padding: 0 var(--space-4); margin-top: var(--space-6);">Account</p>
-    <a href="{% url 'security_settings' %}" class="sidebar-link" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
+    <a href="{{% url 'security_settings' %}}" class="sidebar-link " style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
         <i data-feather="settings" style="width: 18px; height: 18px;"></i> Settings
     </a>
-{% endblock %}
+{%- endblock %}
 
 {% block header_title %}Home{% endblock %}
 

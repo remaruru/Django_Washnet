@@ -3,26 +3,26 @@
 
 {% block title %}Admin Settings - WASHNET{% endblock %}
 
-{% block sidebar_nav %}
-    <p style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2); padding: 0 var(--space-4); margin-top: var(--space-2);">My Laundry</p>
-    <a href="{% url 'dashboard' %}" class="sidebar-link" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
+{{%- block sidebar_nav %}}
+    <p style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2); padding: 0 var(--space-4); margin-top: var(--space-2);">Personal</p>
+    <a href="{{% url 'customer_dashboard' %}}" class="sidebar-link " style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
         <i data-feather="home" style="width: 18px; height: 18px;"></i> Dashboard
     </a>
-    <a href="#" class="sidebar-link" style="opacity: 0.5; cursor: not-allowed; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;" title="Coming Soon">
+    <a href="{{% url 'customer_create_order' %}}" class="sidebar-link " style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
+        <i data-feather="plus-circle" style="width: 18px; height: 18px;"></i> Create Order
+    </a>
+    <a href="{{% url 'customer_history' %}}" class="sidebar-link " style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
         <i data-feather="clock" style="width: 18px; height: 18px;"></i> Order History
     </a>
-    <a href="#" class="sidebar-link" style="opacity: 0.5; cursor: not-allowed; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;" title="Coming Soon">
-        <i data-feather="star" style="width: 18px; height: 18px;"></i> My Rewards
+    <a href="{{% url 'customer_profile' %}}" class="sidebar-link " style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;">
+        <i data-feather="user" style="width: 18px; height: 18px;"></i> Profile
     </a>
-    
+
     <p style="font-size: var(--text-xs); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2); padding: 0 var(--space-4); margin-top: var(--space-6);">Account</p>
-    <a href="#" class="sidebar-link" style="opacity: 0.5; cursor: not-allowed; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--text-muted); font-weight: 600;" title="Coming Soon">
-        <i data-feather="user" style="width: 18px; height: 18px;"></i> Profile Status
-    </a>
-    <a href="{% url 'security_settings' %}" class="sidebar-link active" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--primary); background: var(--primary-light); font-weight: 700;">
+    <a href="{{% url 'security_settings' %}}" class="sidebar-link active" style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-1); border-radius: var(--radius-md); text-decoration: none; color: var(--primary); background: var(--primary-light); font-weight: 700;">
         <i data-feather="settings" style="width: 18px; height: 18px;"></i> Settings
     </a>
-{% endblock %}
+{%- endblock %}
 
 {% block header_title %}Security Settings{% endblock %}
 
