@@ -1,5 +1,7 @@
 # Washnet — Complete Laundry Management System 🧺
 
+**Live Demo:** [https://washnet-pos.onrender.com/](https://washnet-pos.onrender.com/)
+
 Washnet is a comprehensive **Laundry Point-of-Sale (POS) and Management Web Application** built with the Django Web Framework. It facilitates the entire laundry lifecycle—from customer booking (drop-off, walk-in, or delivery) through shop processing, rider delivery, and administrative oversight. The system features role-based access control with distinct dashboards and workflows for Admins, Employees, Riders, and Customers.
 
 ---
