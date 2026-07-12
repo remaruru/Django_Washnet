@@ -24,6 +24,67 @@ Washnet is a comprehensive **Laundry Point-of-Sale (POS) and Management Web Appl
 
 ---
 
+## 📸 Screenshots
+
+### 🏠 Landing Page
+![Landing Page](./screenshots/landing.png)
+
+### 🛒 Customer Dashboard
+![Customer Dashboard](./screenshots/customer-dashboard.png)
+
+### 📝 Create Order
+![Create Order](./screenshots/create-order.png)
+
+### 📋 Order History
+![Order History](./screenshots/order-history.png)
+
+### 👤 Customer Profile Setup
+![Customer Profile](./screenshots/customer-profile.png)
+
+### 🏪 Employee Workflow (Central Processing Queue)
+![Employee Workflow](./screenshots/employee-workflow.png)
+
+### 🔍 Employee Order Detail
+![Employee Order Detail](./screenshots/employee-order-detail.png)
+
+### ✅ Completed History (Employee View)
+![Employee Completed](./screenshots/employee-completed.png)
+
+### 🖥️ POS Terminal
+![POS Terminal](./screenshots/pos-terminal.png)
+
+### 🚶 POS Walk-in Mode
+![POS Walk-in](./screenshots/pos-walkin.png)
+
+### ⚖️ POS Load Setup (Wash & Dry)
+![POS Load Setup](./screenshots/pos-load-setup.png)
+
+### 👑 Admin Command Center
+![Admin Dashboard](./screenshots/admin-dashboard.png)
+
+### 📊 Admin Analytics & Reports
+![Admin Analytics](./screenshots/admin-analytics.png)
+
+### ⚙️ Admin Machine Queue
+![Admin Machine Queue](./screenshots/admin-machine-queue.png)
+
+### 💳 Admin GCash Payments
+![Admin Payments](./screenshots/admin-payments.png)
+
+### 👥 Admin Users & Staff Directory
+![Admin Users](./screenshots/admin-users.png)
+
+### 🛵 Rider Logistics Hub
+![Rider Logistics](./screenshots/rider-logistics.png)
+
+### 📜 Rider Route History
+![Rider History](./screenshots/rider-history.png)
+
+### 🤖 AI Chatbot (Customer & Admin)
+![AI Chatbot](./screenshots/ai-chatbot.png)
+
+---
+
 ## 🛠️ Technical Stack
 
 | Layer | Technology |
@@ -290,3 +351,9 @@ Set the following in the **Render Dashboard → Environment**:
 3. Render detects `render.yaml` and provisions the web service + database automatically.
 4. Set all required environment variables in the Render dashboard.
 5. Trigger a manual deploy or push to `main` — Render runs `build.sh` and starts Gunicorn.
+
+---
+
+## 👨‍💻 Author
+
+**Fully Developed by Earl Angelo Roldan**
